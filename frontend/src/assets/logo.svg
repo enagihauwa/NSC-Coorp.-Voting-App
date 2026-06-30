@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <circle cx="100" cy="100" r="90" fill="#166534" />
+  <circle cx="100" cy="100" r="80" fill="#15803d" />
+  <text x="100" y="85" text-anchor="middle" fill="white" font-size="24" font-weight="bold" font-family="Inter, sans-serif">NSC</text>
+  <text x="100" y="115" text-anchor="middle" fill="#bbf7d0" font-size="11" font-family="Inter, sans-serif">COOPERATIVE</text>
+  <rect x="60" y="130" width="80" height="3" rx="1.5" fill="#4ade80" />
+  <text x="100" y="150" text-anchor="middle" fill="#86efac" font-size="8" font-family="Inter, sans-serif">VOTING SYSTEM</text>
+</svg>

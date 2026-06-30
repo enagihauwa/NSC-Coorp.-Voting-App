@@ -1,0 +1,63 @@
+CREATE TABLE IF NOT EXISTS admin_users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(100) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(50) DEFAULT 'admin',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS positions (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS members (
+  id SERIAL PRIMARY KEY,
+  staff_number VARCHAR(50) UNIQUE NOT NULL,
+  fullname VARCHAR(200) NOT NULL,
+  department VARCHAR(200),
+  location VARCHAR(200),
+  phone VARCHAR(50),
+  email VARCHAR(200),
+  status VARCHAR(20) DEFAULT 'active',
+  has_voted BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS candidates (
+  id SERIAL PRIMARY KEY,
+  position_id INTEGER REFERENCES positions(id) ON DELETE CASCADE,
+  fullname VARCHAR(200) NOT NULL,
+  photo VARCHAR(500),
+  manifesto TEXT,
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS votes (
+  id SERIAL PRIMARY KEY,
+  member_id INTEGER REFERENCES members(id) ON DELETE CASCADE,
+  position_id INTEGER REFERENCES positions(id) ON DELETE CASCADE,
+  candidate_id INTEGER REFERENCES candidates(id) ON DELETE CASCADE,
+  location VARCHAR(200),
+  voter_photo VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(member_id, position_id)
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id SERIAL PRIMARY KEY,
+  admin_id INTEGER REFERENCES admin_users(id),
+  action VARCHAR(200) NOT NULL,
+  details TEXT,
+  ip_address VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS election_settings (
+  id SERIAL PRIMARY KEY,
+  key VARCHAR(100) UNIQUE NOT NULL,
+  value TEXT,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

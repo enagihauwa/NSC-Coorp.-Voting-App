@@ -7,12 +7,14 @@ import Vote from './pages/Vote';
 import Confirmation from './pages/Confirmation';
 import Success from './pages/Success';
 import VerifiedVotes from './pages/VerifiedVotes';
+import RunoffVote from './pages/RunoffVote';
 import AdminLogin from './pages/admin/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
 import Members from './pages/admin/Members';
 import Candidates from './pages/admin/Candidates';
 import Votes from './pages/admin/Votes';
 import Results from './pages/admin/Results';
+import Runoffs from './pages/admin/Runoffs';
 import LocationResults from './pages/admin/LocationResults';
 import SettingsPage from './pages/admin/Settings';
 
@@ -26,6 +28,7 @@ const App = ({ toggleTheme, currentTheme }) => {
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/success" element={<Success />} />
         <Route path="/verified-votes" element={<VerifiedVotes />} />
+        <Route path="/runoff/:runoffId" element={<RunoffVote />} />
       </Route>
 
       {/* Admin Login (no layout) */}
@@ -45,6 +48,7 @@ const App = ({ toggleTheme, currentTheme }) => {
         <Route path="candidates" element={<Candidates />} />
         <Route path="votes" element={<Votes />} />
         <Route path="results" element={<Results />} />
+        <Route path="runoffs" element={<Runoffs />} />
         <Route path="location-results" element={<LocationResults />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

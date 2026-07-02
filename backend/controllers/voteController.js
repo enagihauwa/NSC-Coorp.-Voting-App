@@ -1,9 +1,31 @@
 const { query, pool } = require('../config/database');
-const path = require('path');
 const fs = require('fs');
+const { emitVotePending, emitVoteStatusChanged, emitResultsUpdated } = require('../socket/events');
+const { saveVoterPhoto, VoterPhotoError } = require('../utils/voterPhoto');
+
+const getElectionState = async (client) => {
+  const settingsResult = await client.query(
+    `SELECT key, value
+     FROM election_settings
+     WHERE key IN ('election_open', 'election_end_time')`
+  );
+
+  const settings = settingsResult.rows.reduce((acc, row) => {
+    acc[row.key] = row.value;
+    return acc;
+  }, {});
+
+  const isOpen = String(settings.election_open).toLowerCase() === 'true';
+  const endTime = settings.election_end_time ? new Date(settings.election_end_time) : null;
+  const isEnded = endTime instanceof Date && !Number.isNaN(endTime.getTime()) && Date.now() > endTime.getTime();
+
+  return { isOpen, isEnded };
+};
 
 const submit = async (req, res) => {
   const client = await pool.connect();
+  let transactionStarted = false;
+  let photoFilePath = null;
 
   try {
     const { votes, photo } = req.body;
@@ -16,6 +38,21 @@ const submit = async (req, res) => {
     }
 
     const memberId = votes[0].member_id;
+    const hasMixedMembers = votes.some((vote) => vote.member_id !== memberId);
+    if (hasMixedMembers) {
+      return res.status(400).json({
+        success: false,
+        error: 'All votes in a submission must belong to the same member.',
+      });
+    }
+
+    const electionState = await getElectionState(client);
+    if (!electionState.isOpen || electionState.isEnded) {
+      return res.status(403).json({
+        success: false,
+        error: 'Election is closed. Vote submission is not allowed.',
+      });
+    }
 
     const memberResult = await client.query(
       'SELECT * FROM members WHERE id = $1',
@@ -106,20 +143,21 @@ const submit = async (req, res) => {
 
     let photoFilename = null;
     if (photo) {
-      const uploadDir = process.env.UPLOAD_PATH || path.join(__dirname, '..', 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      let saved;
+      try {
+        saved = saveVoterPhoto(photo, memberId, 'voter');
+      } catch (err) {
+        if (err instanceof VoterPhotoError) {
+          return res.status(400).json({ success: false, error: err.message });
+        }
+        throw err;
       }
-      const matches = photo.match(/^data:image\/(\w+);base64,(.+)$/);
-      if (matches) {
-        const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-        photoFilename = `voter_${memberId}_${Date.now()}.${ext}`;
-        const buffer = Buffer.from(matches[2], 'base64');
-        fs.writeFileSync(path.join(uploadDir, photoFilename), buffer);
-      }
+      photoFilename = saved.filename;
+      photoFilePath = saved.filePath;
     }
 
     await client.query('BEGIN');
+    transactionStarted = true;
 
     for (const vote of votes) {
       await client.query(
@@ -135,12 +173,15 @@ const submit = async (req, res) => {
     );
 
     await client.query('COMMIT');
+    transactionStarted = false;
 
     await query(
       `INSERT INTO audit_logs (admin_id, action, details, ip_address)
        VALUES ($1, $2, $3, $4)`,
       [null, 'VOTE_SUBMIT', `Member #${memberId} (${member.staff_number}) cast ${votes.length} vote(s)`, req.ip]
     );
+
+    emitVotePending({ member_id: memberId, status: 'pending', votes_cast: votes.length });
 
     return res.status(201).json({
       success: true,
@@ -152,7 +193,12 @@ const submit = async (req, res) => {
       },
     });
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (transactionStarted) {
+      await client.query('ROLLBACK');
+    }
+    if (photoFilePath && fs.existsSync(photoFilePath)) {
+      fs.unlinkSync(photoFilePath);
+    }
     console.error('Submit vote error:', error);
 
     if (error.code === '23505') {
@@ -271,6 +317,9 @@ const verifyAll = async (req, res) => {
       [req.admin.id, 'VOTE_VERIFY', `Member #${memberId}: ${result.rows.length} vote(s) verified by admin #${req.admin.id}`, req.ip]
     );
 
+    emitVoteStatusChanged({ member_id: parseInt(memberId, 10), status: 'verified', count: result.rows.length });
+    emitResultsUpdated({ member_id: parseInt(memberId, 10), source: 'verify' });
+
     return res.json({ success: true, data: { member_id: parseInt(memberId, 10), verified: result.rows.length } });
   } catch (error) {
     console.error('Verify all votes error:', error);
@@ -301,6 +350,9 @@ const rejectAll = async (req, res) => {
        VALUES ($1, $2, $3, $4)`,
       [req.admin.id, 'VOTE_REJECT', `Member #${memberId}: ${result.rows.length} vote(s) rejected by admin #${req.admin.id}. Reason: ${reason.trim()}`, req.ip]
     );
+
+    emitVoteStatusChanged({ member_id: parseInt(memberId, 10), status: 'rejected', count: result.rows.length });
+    emitResultsUpdated({ member_id: parseInt(memberId, 10), source: 'reject' });
 
     return res.json({ success: true, data: { member_id: parseInt(memberId, 10), rejected: result.rows.length } });
   } catch (error) {

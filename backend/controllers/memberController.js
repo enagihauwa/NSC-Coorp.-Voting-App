@@ -105,7 +105,9 @@ const getByStaffNumber = async (req, res) => {
       });
     }
 
-    if (member.fullname.toLowerCase().trim() !== fullname.toLowerCase().trim()) {
+    const normalizedDbName = String(member.fullname).replace(/\s+/g, ' ').trim().toLowerCase();
+    const normalizedInputName = String(fullname).replace(/\s+/g, ' ').trim().toLowerCase();
+    if (normalizedDbName !== normalizedInputName) {
       return res.status(401).json({
         success: false,
         error: 'Full name does not match our records. Please try again.',
@@ -125,8 +127,6 @@ const getByStaffNumber = async (req, res) => {
         id: member.id,
         staff_number: member.staff_number,
         fullname: member.fullname,
-        department: member.department,
-        location: member.location,
         has_voted: member.has_voted,
       },
     });

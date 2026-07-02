@@ -7,6 +7,8 @@ import store from './redux/store';
 import App from './App';
 import './index.css';
 
+import { brandColors } from './theme/tokens';
+
 const getInitialTheme = () => {
   try {
     const stored = localStorage.getItem('nsc_voting_theme');
@@ -19,9 +21,9 @@ const buildTheme = (mode) => createTheme({
   palette: {
     mode,
     primary: {
-      main: '#059669',
+      main: brandColors.primary,
       light: '#a7f3d0',
-      dark: '#047857',
+      dark: brandColors.primaryDark,
       contrastText: '#ffffff',
     },
     secondary: {
@@ -181,6 +183,9 @@ const Root = () => {
   React.useEffect(() => {
     localStorage.setItem('nsc_voting_theme', mode);
     document.documentElement.setAttribute('data-theme', mode);
+    // Tailwind is configured with darkMode:'class', so `dark:` variants
+    // only activate when the `dark` class is present on <html>.
+    document.documentElement.classList.toggle('dark', mode === 'dark');
   }, [mode]);
 
   const theme = React.useMemo(() => buildTheme(mode), [mode]);

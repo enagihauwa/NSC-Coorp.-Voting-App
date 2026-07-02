@@ -33,7 +33,7 @@ const getDashboard = async (req, res) => {
     const positionsWithVotesResult = await query(
       `SELECT p.id, p.name, COUNT(v.id) as vote_count
        FROM positions p
-       LEFT JOIN votes v ON p.id = v.position_id
+       LEFT JOIN votes v ON p.id = v.position_id AND v.status = 'verified'
        GROUP BY p.id, p.name
        ORDER BY p.id`
     );

@@ -10,7 +10,7 @@ const LoadingSpinner = ({ message = 'Loading...' }) => {
       minHeight="400px"
       width="100%"
     >
-      <CircularProgress size={48} sx={{ color: '#16a34a' }} />
+      <CircularProgress size={48} sx={{ color: 'primary.main' }} />
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
         {message}
       </Typography>

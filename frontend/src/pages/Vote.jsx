@@ -12,12 +12,14 @@ import ReviewIcon from '@mui/icons-material/Visibility';
 import CandidateCard from '../components/CandidateCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorBoundary from '../components/ErrorBoundary';
+import useIsMobile from '../hooks/useIsMobile';
 import { fetchCandidates } from '../redux/candidateSlice';
 import { ELECTION_POSITIONS, STORAGE_KEYS } from '../utils/constants';
 
 const Vote = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isMobile = useIsMobile();
   const { candidates, loading, error } = useSelector((state) => state.candidates);
   const [selections, setSelections] = useState({});
   const [activeStep, setActiveStep] = useState(0);
@@ -119,9 +121,11 @@ const Vote = () => {
 
   return (
     <ErrorBoundary>
-      <Box py={4}>
+      <Box py={{ xs: 2, sm: 4 }} sx={{ pb: { xs: 'calc(16px + env(safe-area-inset-bottom))', sm: 4 } }}>
         <Box textAlign="center" mb={3}>
-          <Typography variant="h4" fontWeight={800}>Cast Your Vote</Typography>
+          <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
+            Cast Your Vote
+          </Typography>
           <Typography variant="body1" color="text.secondary" mt={0.5}>
             Welcome, {voteData.fullname || voteData.name}
           </Typography>
@@ -130,32 +134,43 @@ const Vote = () => {
           </Typography>
         </Box>
 
-        <Paper elevation={0} sx={{ p: 2.5, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 2.5 }, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1} flexWrap="wrap" gap={1}>
             <Typography variant="body2" fontWeight={600}>Progress</Typography>
-            <Typography variant="body2" fontWeight={600} color="#16a34a">
+            <Typography variant="body2" fontWeight={600} color="primary.main">
               {completedCount} of {totalSteps} positions filled
             </Typography>
           </Box>
           <LinearProgress variant="determinate" value={progress}
-            sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { bgcolor: '#16a34a', borderRadius: 4 } }} />
+            sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { bgcolor: 'primary.main', borderRadius: 4 } }} />
         </Paper>
 
-        <Stepper activeStep={activeStep} orientation="horizontal" alternativeLabel
-          sx={{ mb: 4, '& .MuiStepLabel-root .Mui-completed': { color: '#16a34a' }, '& .MuiStepLabel-root .Mui-active': { color: '#16a34a' }, '& .MuiStepLabel-root .Mui-disabled .MuiStepLabel-iconContainer': { color: 'text.disabled' }, overflowX: 'auto' }}>
-          {activePositions.map((pos) => (
-            <Step key={pos.id}>
-              <StepLabel>{pos.label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
-            <Typography variant="overline" color="text.secondary" fontWeight={600} letterSpacing={1}>
+        {!isMobile ? (
+          <Stepper activeStep={activeStep} orientation="horizontal" alternativeLabel
+            sx={{ mb: 4, '& .MuiStepLabel-root .Mui-completed': { color: 'primary.main' }, '& .MuiStepLabel-root .Mui-active': { color: 'primary.main' }, overflowX: 'auto' }}>
+            {activePositions.map((pos) => (
+              <Step key={pos.id}>
+                <StepLabel>{pos.label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        ) : (
+          <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
               Step {activeStep + 1} of {totalSteps}
             </Typography>
-            <Typography variant="caption" sx={{ color: isSelected ? '#16a34a' : 'text.disabled', fontWeight: 600 }}>
+            <Typography variant="body2" fontWeight={700} color="primary.main">
+              {currentPosition?.label}
+            </Typography>
+          </Paper>
+        )}
+
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5} flexWrap="wrap" gap={1}>
+            <Typography variant="overline" color="text.secondary" fontWeight={600} letterSpacing={1}>
+              {!isMobile ? `Step ${activeStep + 1} of ${totalSteps}` : 'Select one candidate'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: isSelected ? 'primary.main' : 'text.disabled', fontWeight: 600 }}>
               {isSelected ? (
                 <Box component="span" display="inline-flex" alignItems="center" gap={0.5}>
                   <CheckCircleIcon sx={{ fontSize: 14 }} /> Selected
@@ -165,8 +180,10 @@ const Vote = () => {
           </Box>
 
           <Box display="flex" alignItems="center" gap={1} mb={3}>
-            <Box sx={{ width: 4, height: 24, borderRadius: 2, bgcolor: '#16a34a', flexShrink: 0 }} />
-            <Typography variant="h6" fontWeight={700}>{currentPosition.label}</Typography>
+            <Box sx={{ width: 4, height: 24, borderRadius: 2, bgcolor: 'primary.main', flexShrink: 0 }} />
+            <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              {currentPosition.label}
+            </Typography>
           </Box>
 
           {positionCandidates.length === 0 ? (
@@ -185,18 +202,18 @@ const Vote = () => {
           )}
         </Paper>
 
-        <Box display="flex" justifyContent="space-between" gap={2}>
+        <Box display="flex" flexDirection={{ xs: 'column-reverse', sm: 'row' }} justifyContent="space-between" gap={2}>
           <Button variant="outlined" startIcon={<ArrowBackIcon />}
-            onClick={handleBack}
-            sx={{ borderColor: 'divider', px: 3, py: 1 }}>
+            onClick={handleBack} fullWidth={isMobile}
+            sx={{ borderColor: 'divider', px: 3, py: 1.25, minHeight: 44 }}>
             {activeStep === 0 ? 'Go Back' : 'Previous'}
           </Button>
 
           <Button variant="contained" size="large"
             endIcon={isLastStep ? <ReviewIcon /> : <ArrowForwardIcon />}
-            disabled={!isSelected}
+            disabled={!isSelected} fullWidth={isMobile}
             onClick={handleNext}
-            sx={{ px: 4, py: 1, bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, fontWeight: 600 }}>
+            sx={{ px: 4, py: 1.25, minHeight: 44, bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, fontWeight: 600 }}>
             {isLastStep ? 'Review Vote' : 'Next'}
           </Button>
         </Box>

@@ -70,7 +70,7 @@ const AdminLogin = () => {
                 </InputAdornment>
               )}} />
             <Button type="submit" variant="contained" fullWidth size="large" disabled={loading}
-              sx={{ py: 1.5, bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, fontWeight: 600 }}>
+              sx={{ py: 1.5, bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, fontWeight: 600 }}>
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </Box>

@@ -86,7 +86,7 @@ const getById = async (req, res) => {
     }
 
     const voteCount = await query(
-      'SELECT COUNT(*) as count FROM votes WHERE candidate_id = $1',
+      "SELECT COUNT(*) as count FROM votes WHERE candidate_id = $1 AND status = 'verified'",
       [id]
     );
 

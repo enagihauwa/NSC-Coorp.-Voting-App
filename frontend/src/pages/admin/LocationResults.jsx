@@ -13,15 +13,24 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { ELECTION_POSITIONS, POSITION_LABELS } from '../../utils/constants';
+import { subscribeToAdminVotes } from '../../services/socket';
 
 const LocationResults = () => {
   const dispatch = useDispatch();
   const { locationResults, loading } = useSelector((state) => state.results);
+  const { token } = useSelector((state) => state.auth);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     dispatch(fetchLocationResults());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    return subscribeToAdminVotes(token, (event) => {
+      if (event === 'results:updated') dispatch(fetchLocationResults());
+    });
+  }, [dispatch, token]);
 
   const locations = useMemo(() => {
     if (!locationResults) return [];
@@ -83,12 +92,12 @@ const LocationResults = () => {
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <LocationOnIcon sx={{ color: '#16a34a' }} />
+                    <LocationOnIcon sx={{ color: 'primary.main' }} />
                     <Typography variant="subtitle1" fontWeight={600}>
                       {loc.location || 'Unknown Location'}
                     </Typography>
                     <Chip label={`${totalVotes} vote${totalVotes !== 1 ? 's' : ''}`} size="small"
-                      sx={{ bgcolor: 'rgba(22, 163, 74, 0.1)', color: '#16a34a', fontWeight: 600 }} />
+                      sx={{ bgcolor: 'rgba(22, 163, 74, 0.1)', color: 'primary.main', fontWeight: 600 }} />
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails>
@@ -101,7 +110,7 @@ const LocationResults = () => {
                             name: POSITION_LABELS[d.position] || d.position || d.name || 'Unknown',
                             votes: d.votes || d.totalVotes || d.value || 0,
                           }))}
-                          xKey="name" bars={[{ dataKey: 'votes', fill: '#22c55e', name: 'Votes' }]} height={250} />
+                          xKey="name" bars={[{ dataKey: 'votes', name: 'Votes' }]} height={250} />
                         <PieChartComponent
                           data={chartData.map((d) => ({
                             name: POSITION_LABELS[d.position] || d.position || d.name || 'Unknown',

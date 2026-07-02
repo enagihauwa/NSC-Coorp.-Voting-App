@@ -45,6 +45,7 @@ const login = async (req, res) => {
           id: admin.id,
           username: admin.username,
           role: admin.role,
+          must_change_password: Boolean(admin.must_change_password),
         },
       },
     });

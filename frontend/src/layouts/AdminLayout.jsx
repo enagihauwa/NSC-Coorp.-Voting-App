@@ -33,6 +33,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import BallotIcon from '@mui/icons-material/Ballot';
+import ReplayIcon from '@mui/icons-material/Replay';
 import { logout } from '../redux/authSlice';
 
 const DRAWER_WIDTH = 260;
@@ -43,6 +44,7 @@ const navItems = [
   { label: 'Candidates', path: '/admin/candidates', icon: <BallotIcon /> },
   { label: 'Votes', path: '/admin/votes', icon: <HowToVoteIcon /> },
   { label: 'Results', path: '/admin/results', icon: <BarChartIcon /> },
+  { label: 'Runoffs', path: '/admin/runoffs', icon: <ReplayIcon /> },
   { label: 'Location Results', path: '/admin/location-results', icon: <LocationOnIcon /> },
   { label: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
 ];
@@ -67,13 +69,13 @@ const NavSection = ({ navItems, currentPath, isMobile, onNavigate }) => {
                 '&.Mui-selected': {
                   bgcolor: 'rgba(22, 163, 74, 0.12)',
                   '&:hover': { bgcolor: 'rgba(22, 163, 74, 0.18)' },
-                  '& .MuiListItemIcon-root': { color: '#16a34a' },
-                  '& .MuiListItemText-primary': { color: '#16a34a', fontWeight: 600 },
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
                 },
               }}
             >
               <ListItemIcon
-                sx={{ minWidth: 40, color: active ? '#16a34a' : 'text.secondary' }}
+                sx={{ minWidth: 40, color: active ? 'primary.main' : 'text.secondary' }}
               >
                 {item.icon}
               </ListItemIcon>
@@ -89,7 +91,7 @@ const NavSection = ({ navItems, currentPath, isMobile, onNavigate }) => {
                   sx={{
                     width: 3,
                     height: 24,
-                    bgcolor: '#16a34a',
+                    bgcolor: 'primary.main',
                     borderRadius: 1.5,
                     ml: 'auto',
                   }}
@@ -212,6 +214,7 @@ const AdminLayout = ({ toggleTheme, currentTheme }) => {
           <IconButton
             color="inherit"
             edge="start"
+            aria-label="Open navigation menu"
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { md: 'none' } }}
           >
@@ -221,12 +224,12 @@ const AdminLayout = ({ toggleTheme, currentTheme }) => {
             {activeLabel}
           </Typography>
           <Tooltip title={`Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} mode`}>
-            <IconButton onClick={toggleTheme} sx={{ mr: 1 }}>
+            <IconButton onClick={toggleTheme} aria-label="Toggle color theme" sx={{ mr: 1 }}>
               {currentTheme === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
-          <IconButton onClick={handleMenuOpen}>
-            <Avatar sx={{ width: 32, height: 32, bgcolor: '#16a34a', fontSize: 14 }}>
+          <IconButton onClick={handleMenuOpen} aria-label="Open account menu">
+            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>
               {admin?.username?.[0]?.toUpperCase() || 'A'}
             </Avatar>
           </IconButton>

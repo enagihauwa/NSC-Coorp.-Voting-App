@@ -17,7 +17,7 @@ const getResults = async (req, res) => {
       const votesResult = await query(
         `SELECT c.id, c.fullname, c.photo, COUNT(v.id) as vote_count
          FROM candidates c
-         LEFT JOIN votes v ON c.id = v.candidate_id AND v.position_id = $1
+         LEFT JOIN votes v ON c.id = v.candidate_id AND v.position_id = $1 AND v.status = 'verified'
          WHERE c.position_id = $1
          GROUP BY c.id, c.fullname, c.photo
          ORDER BY vote_count DESC`,
@@ -84,8 +84,8 @@ const getLocationResults = async (req, res) => {
       const locationName = loc.location;
 
       const totalVotesResult = await query(
-        'SELECT COUNT(*) as count FROM votes WHERE location = $1',
-        [locationName]
+        'SELECT COUNT(*) as count FROM votes WHERE location = $1 AND status = $2',
+        [locationName, 'verified']
       );
       const totalVotes = parseInt(totalVotesResult.rows[0].count, 10);
 
@@ -96,14 +96,14 @@ const getLocationResults = async (req, res) => {
         const candidatesResult = await query(
           `SELECT c.fullname, COUNT(v.id) as vote_count
            FROM candidates c
-           LEFT JOIN votes v ON c.id = v.candidate_id AND v.position_id = $1 AND v.location = $2
+           LEFT JOIN votes v ON c.id = v.candidate_id AND v.position_id = $1 AND v.location = $2 AND v.status = 'verified'
            WHERE c.position_id = $1
            GROUP BY c.id, c.fullname
            ORDER BY vote_count DESC`,
           [position.id, locationName]
         );
 
-        const positionTotal = candidatesResult.reduce(
+        const positionTotal = candidatesResult.rows.reduce(
           (sum, row) => sum + parseInt(row.vote_count, 10),
           0
         );
@@ -111,7 +111,7 @@ const getLocationResults = async (req, res) => {
         positionBreakdown.push({
           position_name: position.name,
           total_votes: positionTotal,
-          candidates: candidatesResult.map((r) => ({
+          candidates: candidatesResult.rows.map((r) => ({
             fullname: r.fullname,
             vote_count: parseInt(r.vote_count, 10),
           })),
@@ -141,7 +141,7 @@ const getLocationResults = async (req, res) => {
 const getSummary = async (req, res) => {
   try {
     const totalMembersResult = await query('SELECT COUNT(*) as count FROM members WHERE status = $1', ['active']);
-    const totalVotesResult = await query('SELECT COUNT(DISTINCT member_id) as count FROM votes');
+    const totalVotesResult = await query("SELECT COUNT(DISTINCT member_id) as count FROM votes WHERE status = 'verified'");
     const totalPositionsResult = await query('SELECT COUNT(*) as count FROM positions');
     const totalCandidatesResult = await query('SELECT COUNT(*) as count FROM candidates WHERE status = $1', ['active']);
 
@@ -157,6 +157,7 @@ const getSummary = async (req, res) => {
     const votedWithLocation = await query(
       `SELECT v.location, COUNT(DISTINCT v.member_id) as count
        FROM votes v
+       WHERE v.status = 'verified'
        GROUP BY v.location
        ORDER BY count DESC`
     );
@@ -165,7 +166,7 @@ const getSummary = async (req, res) => {
       success: true,
       data: {
         total_members: totalMembers,
-        total_voters,
+        total_voters: totalVoters,
         pending_voters: totalMembers - totalVoters,
         total_positions: totalPositions,
         total_candidates: totalCandidates,

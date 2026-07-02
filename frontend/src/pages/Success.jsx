@@ -18,7 +18,7 @@ const Success = () => {
     <ErrorBoundary>
       <Box py={8} display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="80vh" textAlign="center">
         <Box sx={{ opacity: showContent ? 1 : 0, transform: showContent ? 'scale(1)' : 'scale(0.5)', transition: 'all 0.5s ease-out' }}>
-          <CheckCircleOutlineIcon sx={{ fontSize: 120, color: '#16a34a' }} />
+          <CheckCircleOutlineIcon sx={{ fontSize: 120, color: 'primary.main' }} />
         </Box>
         <Box sx={{ opacity: showContent ? 1 : 0, transition: 'opacity 0.5s ease-out 0.3s' }}>
           <Typography variant="h3" fontWeight={800} sx={{ mt: 3, mb: 1 }}>Vote Successfully Recorded!</Typography>

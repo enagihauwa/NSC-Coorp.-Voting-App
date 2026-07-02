@@ -21,7 +21,7 @@ import { fetchCandidates, createCandidate, updateCandidate, deleteCandidate, tog
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import ErrorBoundary from '../../components/ErrorBoundary';
-import { ELECTION_POSITIONS } from '../../utils/constants';
+import { ELECTION_POSITIONS, resolvePhotoUrl } from '../../utils/constants';
 
 const schema = yup.object({
   fullname: yup.string().required('Candidate name is required'),
@@ -56,9 +56,7 @@ const Candidates = () => {
 
   const handleOpenEdit = (candidate) => {
     setEditing(candidate); setPhotoFile(null);
-    setPhotoPreview(candidate.photo
-      ? candidate.photo.startsWith('http') ? candidate.photo : `http://localhost:5000/uploads/${candidate.photo}`
-      : null);
+    setPhotoPreview(resolvePhotoUrl(candidate.photo) || null);
     reset({ fullname: candidate.fullname || '', position_id: parseInt(candidate.position_id, 10) || '', manifesto: candidate.manifesto || '' });
     setDialogOpen(true);
   };
@@ -104,17 +102,17 @@ const Candidates = () => {
 
   const columns = [
     { field: 'photo', headerName: '', width: 60, sortable: false, renderCell: (p) => (
-      <Avatar src={p.row.photo ? (p.row.photo.startsWith('http') ? p.row.photo : `http://localhost:5000/uploads/${p.row.photo}`) : undefined} sx={{ width: 36, height: 36 }}><PersonIcon fontSize="small" /></Avatar>
+      <Avatar src={resolvePhotoUrl(p.row.photo)} sx={{ width: 36, height: 36 }}><PersonIcon fontSize="small" /></Avatar>
     )},
     { field: 'fullname', headerName: 'Name', flex: 1.5, minWidth: 180 },
     { field: 'position_name', headerName: 'Position', flex: 1, minWidth: 150, valueGetter: (p) => p?.row?.position_name || getPositionLabel(p?.row?.position_id) },
     { field: 'status', headerName: 'Status', width: 100, renderCell: (p) => (
-      <Chip label={p.row.status === 'active' ? 'Active' : 'Inactive'} size="small" sx={{ fontWeight: 600, bgcolor: p.row.status === 'active' ? 'rgba(22,163,74,0.1)' : 'rgba(239,68,68,0.1)', color: p.row.status === 'active' ? '#16a34a' : '#ef4444' }} />
+      <Chip label={p.row.status === 'active' ? 'Active' : 'Inactive'} size="small" sx={{ fontWeight: 600, bgcolor: p.row.status === 'active' ? 'rgba(22,163,74,0.1)' : 'rgba(239,68,68,0.1)', color: p.row.status === 'active' ? 'primary.main' : '#ef4444' }} />
     )},
     { field: 'actions', headerName: 'Actions', width: 140, sortable: false, renderCell: (p) => (
       <Box display="flex" gap={0.5}>
         <IconButton size="small" onClick={() => handleOpenEdit(p.row)} sx={{ color: '#3b82f6' }}><EditIcon fontSize="small" /></IconButton>
-        <IconButton size="small" onClick={() => handleToggleStatus(p.row)} sx={{ color: p.row.status === 'active' ? '#d97706' : '#16a34a' }}>{p.row.status === 'active' ? <ToggleOffIcon fontSize="small" /> : <ToggleOnIcon fontSize="small" />}</IconButton>
+        <IconButton size="small" onClick={() => handleToggleStatus(p.row)} sx={{ color: p.row.status === 'active' ? '#d97706' : 'primary.main' }}>{p.row.status === 'active' ? <ToggleOffIcon fontSize="small" /> : <ToggleOnIcon fontSize="small" />}</IconButton>
         <IconButton size="small" onClick={() => handleDelete(p.row)} sx={{ color: '#ef4444' }}><DeleteIcon fontSize="small" /></IconButton>
       </Box>
     )},
@@ -130,7 +128,7 @@ const Candidates = () => {
             <Typography variant="h5" fontWeight={700}>Candidates</Typography>
             <Typography variant="body2" color="text.secondary">Manage election candidates and their positions</Typography>
           </Box>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAdd} sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, borderRadius: 2, px: 3, py: 1 }}>Add Candidate</Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAdd} sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, borderRadius: 2, px: 3, py: 1 }}>Add Candidate</Button>
         </Box>
 
         {(error || localError) && (
@@ -169,7 +167,7 @@ const Candidates = () => {
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
               <Button onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
-              <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' } }}>
+              <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}>
                 {isSubmitting ? 'Saving...' : editing ? 'Update Candidate' : 'Add Candidate'}
               </Button>
             </DialogActions>

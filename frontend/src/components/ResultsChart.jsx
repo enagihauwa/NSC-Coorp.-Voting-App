@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -11,22 +11,8 @@ import {
   Pie,
   Cell,
   Legend,
-  LineChart,
-  Line,
 } from 'recharts';
-
-const COLORS = [
-  '#22c55e',
-  '#3b82f6',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#14b8a6',
-  '#f97316',
-  '#6366f1',
-  '#84cc16',
-];
+import { chartSeriesColors, truncateLabel } from '../theme/tokens';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -53,82 +39,127 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export const BarChartComponent = ({ data, xKey, bars, title, height = 300 }) => {
+const useChartLayout = (height = 300) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
+  return {
+    isMobile,
+    isTablet,
+    height: isMobile ? 220 : isTablet ? 260 : height,
+    tickFontSize: isMobile ? 10 : 12,
+    xAxisAngle: isMobile ? -35 : 0,
+    bottomMargin: isMobile ? 56 : 20,
+    showPieLabels: !isMobile,
+    pieOuterRadius: isMobile ? 70 : Math.min(height / 2 - 40, 120),
+    colors: chartSeriesColors,
+    axisColor: theme.palette.text.secondary,
+    gridColor: theme.palette.divider,
+  };
+};
+
+export const BarChartComponent = ({ data, xKey, bars, title, height = 300 }) => {
+  const layout = useChartLayout(height);
+
+  if (!data?.length) {
+    return (
+      <Box sx={{ py: 4, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">No chart data available</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
+    <Box role="img" aria-label={title || 'Bar chart'}>
       {title && (
         <Typography variant="subtitle1" fontWeight="bold" mb={2}>
           {title}
         </Typography>
       )}
-      <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-          <XAxis
-            dataKey={xKey}
-            tick={{ fontSize: 12 }}
-            stroke={theme.palette.text.secondary}
-          />
-          <YAxis tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
-          <Tooltip content={<CustomTooltip />} />
-          {(bars || [{ dataKey: 'value', fill: '#22c55e', name: 'Votes' }]).map(
-            (bar, index) => (
+      <Box sx={{ width: '100%', minHeight: layout.height }}>
+        <ResponsiveContainer width="100%" height={layout.height}>
+          <BarChart data={data} margin={{ top: 5, right: 12, left: 0, bottom: layout.bottomMargin }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={layout.gridColor} />
+            <XAxis
+              dataKey={xKey}
+              tick={{ fontSize: layout.tickFontSize }}
+              stroke={layout.axisColor}
+              angle={layout.xAxisAngle}
+              textAnchor={layout.xAxisAngle ? 'end' : 'middle'}
+              height={layout.xAxisAngle ? 60 : 30}
+              tickFormatter={(value) => truncateLabel(value, layout.isMobile ? 12 : 18)}
+            />
+            <YAxis tick={{ fontSize: layout.tickFontSize }} stroke={layout.axisColor} allowDecimals={false} />
+            <Tooltip content={<CustomTooltip />} />
+            {(bars || [{ dataKey: 'value', name: 'Votes' }]).map((bar, index) => (
               <Bar
                 key={index}
                 dataKey={bar.dataKey}
-                fill={bar.fill || COLORS[index % COLORS.length]}
+                fill={bar.fill || layout.colors[index % layout.colors.length]}
                 name={bar.name || bar.dataKey}
                 radius={[4, 4, 0, 0]}
               />
-            )
-          )}
-        </BarChart>
-      </ResponsiveContainer>
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </Box>
     </Box>
   );
 };
 
 export const PieChartComponent = ({ data, dataKey, nameKey, title, height = 300, innerRadius = 0 }) => {
   const theme = useTheme();
+  const layout = useChartLayout(height);
+
+  if (!data?.length) {
+    return (
+      <Box sx={{ py: 4, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">No chart data available</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
+    <Box role="img" aria-label={title || 'Pie chart'}>
       {title && (
         <Typography variant="subtitle1" fontWeight="bold" mb={2}>
           {title}
         </Typography>
       )}
-      <ResponsiveContainer width="100%" height={height}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={innerRadius}
-            outerRadius={Math.min(height / 2 - 40, 120)}
-            dataKey={dataKey || 'value'}
-            nameKey={nameKey || 'name'}
-            label={({ name, percent }) =>
-              `${name} ${(percent * 100).toFixed(0)}%`
-            }
-            labelLine
-          >
-            {data.map((_, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-                stroke={theme.palette.background.paper}
-                strokeWidth={2}
-              />
-            ))}
-          </Pie>
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+      <Box sx={{ width: '100%', minHeight: layout.height }}>
+        <ResponsiveContainer width="100%" height={layout.height}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={innerRadius}
+              outerRadius={layout.pieOuterRadius}
+              dataKey={dataKey || 'value'}
+              nameKey={nameKey || 'name'}
+              label={layout.showPieLabels
+                ? ({ name, percent }) => `${truncateLabel(name, 14)} ${(percent * 100).toFixed(0)}%`
+                : false}
+              labelLine={layout.showPieLabels}
+            >
+              {data.map((_, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={layout.colors[index % layout.colors.length]}
+                  stroke={theme.palette.background.paper}
+                  strokeWidth={2}
+                />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
     </Box>
   );
 };
 
-export { COLORS };
+export { chartSeriesColors as COLORS };
 export default BarChartComponent;

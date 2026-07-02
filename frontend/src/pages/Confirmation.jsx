@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Chip,
+  TableHead, TableRow, Chip, Stack, useMediaQuery, useTheme,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -15,10 +15,13 @@ import IdCardUpload from '../components/CameraCapture';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { STORAGE_KEYS, ELECTION_POSITIONS } from '../utils/constants';
+import { swalColors } from '../theme/tokens';
 
 const Confirmation = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { submissionStatus, loading, error } = useSelector((state) => state.votes);
   const [voterPhoto, setVoterPhoto] = useState(null);
 
@@ -42,8 +45,8 @@ const Confirmation = () => {
       text: 'This action cannot be undone.',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#16a34a',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: swalColors.confirm,
+      cancelButtonColor: swalColors.danger,
       confirmButtonText: 'Yes, Submit Vote!',
       cancelButtonText: 'Cancel',
       reverseButtons: true,
@@ -55,30 +58,33 @@ const Confirmation = () => {
           position_id: parseInt(posId, 10),
           candidate_id: parseInt(data.candidate?.id || data.candidate, 10),
         }));
-        console.log('Submitting votes:', JSON.stringify({ votes: votesArray, photo: voterPhoto?.slice(0, 50) }));
         await dispatch(submitVote({ votes: votesArray, photo: voterPhoto }));
       }
     });
   };
 
-  if (submissionStatus === 'success') {
-    localStorage.removeItem(STORAGE_KEYS.VOTE_DATA);
-    localStorage.removeItem(STORAGE_KEYS.VOTE_SELECTIONS);
-    dispatch(resetSubmissionStatus());
-    navigate('/success', { replace: true });
-    return null;
-  }
+  const hasSelections = !!voteData && Object.keys(selections).length > 0;
 
-  if (!voteData || Object.keys(selections).length === 0) {
-    navigate('/', { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (submissionStatus === 'success') {
+      localStorage.removeItem(STORAGE_KEYS.VOTE_DATA);
+      localStorage.removeItem(STORAGE_KEYS.VOTE_SELECTIONS);
+      dispatch(resetSubmissionStatus());
+      navigate('/success', { replace: true });
+    }
+  }, [submissionStatus, dispatch, navigate]);
+
+  useEffect(() => {
+    if (!hasSelections) navigate('/', { replace: true });
+  }, [hasSelections, navigate]);
+
+  if (submissionStatus === 'success' || !hasSelections) return null;
 
   return (
     <ErrorBoundary>
       <Box py={4}>
         <Box textAlign="center" mb={4}>
-          <CheckCircleIcon sx={{ fontSize: 56, color: '#16a34a', mb: 1 }} />
+          <CheckCircleIcon sx={{ fontSize: 56, color: 'primary.main', mb: 1 }} />
           <Typography variant="h4" fontWeight={800}>Review Your Vote</Typography>
           <Typography variant="body1" color="text.secondary" mt={1}>
             Please review your selections and upload your staff ID card before submitting
@@ -108,7 +114,7 @@ const Confirmation = () => {
               Staff No: {voteData.staffNumber || voteData.staff_number} | {voteData.department} | {voteData.location}
             </Typography>
           </Box>
-          <TableContainer>
+          <TableContainer sx={{ display: { xs: 'none', sm: 'block' } }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -123,7 +129,7 @@ const Confirmation = () => {
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
                         <Chip icon={<CheckCircleIcon />} label={item.details?.candidate?.fullname || 'Selected'} size="small"
-                          sx={{ bgcolor: 'rgba(22,163,74,0.1)', color: '#16a34a', fontWeight: 500 }} />
+                          sx={{ bgcolor: 'rgba(22,163,74,0.1)', color: 'primary.main', fontWeight: 500 }} />
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -131,11 +137,21 @@ const Confirmation = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' }, p: 2 }}>
+            {orderedSelections.map((item) => (
+              <Paper key={item.id} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>{item.label}</Typography>
+                <Typography variant="body2" fontWeight={600} mt={0.5}>
+                  {item.details?.candidate?.fullname || 'Selected'}
+                </Typography>
+              </Paper>
+            ))}
+          </Stack>
         </Paper>
 
         <Paper elevation={0} sx={{ p: 3, mt: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
           <Box display="flex" alignItems="center" gap={1} mb={2}>
-            <BadgeIcon sx={{ color: '#16a34a', fontSize: 20 }} />
+            <BadgeIcon sx={{ color: 'primary.main', fontSize: 20 }} />
             <Typography variant="subtitle1" fontWeight={600}>Staff ID Card Upload</Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" mb={2}>
@@ -159,13 +175,13 @@ const Confirmation = () => {
 
         {loading && <LoadingSpinner message="Submitting your vote..." />}
 
-        <Box display="flex" justifyContent="space-between" gap={2} mt={4}>
-          <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleGoBack} disabled={loading} sx={{ borderColor: 'divider' }}>
+        <Box display="flex" flexDirection={{ xs: 'column-reverse', sm: 'row' }} justifyContent="space-between" gap={2} mt={4}>
+          <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleGoBack} disabled={loading} fullWidth={isMobile} sx={{ borderColor: 'divider', minHeight: 44 }}>
             Go Back
           </Button>
           <Button variant="contained" size="large" endIcon={<HowToVoteIcon />}
-            onClick={handleSubmitVote} disabled={loading || !voterPhoto}
-            sx={{ px: 4, py: 1.5, bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, fontWeight: 600 }}>
+            onClick={handleSubmitVote} disabled={loading || !voterPhoto} fullWidth={isMobile}
+            sx={{ px: 4, py: 1.5, minHeight: 44, bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, fontWeight: 600 }}>
             {loading ? 'Submitting...' : 'Submit Vote'}
           </Button>
         </Box>

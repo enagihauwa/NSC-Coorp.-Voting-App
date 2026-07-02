@@ -1,4 +1,11 @@
-export const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4003/api';
+
+// Static uploads are served from the server root (`/uploads`), not under `/api`.
+export const UPLOADS_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+
+// Resolve a stored photo filename (or absolute URL) to a displayable src.
+export const resolvePhotoUrl = (photo) =>
+  photo ? (photo.startsWith('http') ? photo : `${UPLOADS_BASE_URL}/uploads/${photo}`) : undefined;
 
 export const ELECTION_POSITIONS = [
   { id: 1, label: 'President', order: 1 },

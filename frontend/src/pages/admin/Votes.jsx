@@ -18,13 +18,14 @@ import api from '../../services/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import ErrorBoundary from '../../components/ErrorBoundary';
-import { LOCATIONS, API_BASE_URL } from '../../utils/constants';
-const UPLOADS_BASE = API_BASE_URL.replace('/api', '');
+import { LOCATIONS, UPLOADS_BASE_URL } from '../../utils/constants';
+import { subscribeToAdminVotes } from '../../services/socket';
 const maskStaffNo = (s) => s ? s.slice(0, 3) + 'XXX' : s;
 
 const Votes = () => {
   const dispatch = useDispatch();
   const { votes, loading } = useSelector((s) => s.votes);
+  const { token } = useSelector((s) => s.auth);
   const [locationFilter, setLocationFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVoter, setSelectedVoter] = useState(null);
@@ -40,6 +41,15 @@ const Votes = () => {
     if (locationFilter) params.location = locationFilter;
     dispatch(fetchVotes(params));
   }, [dispatch, locationFilter]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    return subscribeToAdminVotes(token, () => {
+      const params = { page: 1, limit: 500 };
+      if (locationFilter) params.location = locationFilter;
+      dispatch(fetchVotes(params));
+    });
+  }, [dispatch, locationFilter, token]);
 
   const groupedVoters = useMemo(() => {
     const flat = Array.isArray(votes) ? votes : [];
@@ -128,7 +138,7 @@ const Votes = () => {
         ]);
       });
     });
-    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+    const csv = rows.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -243,7 +253,7 @@ const Votes = () => {
                       </Typography>
                       <Box
                         component="img"
-                        src={`${UPLOADS_BASE}/uploads/${selectedVoter.voter_photo}`}
+                        src={`${UPLOADS_BASE_URL}/uploads/${selectedVoter.voter_photo}`}
                         alt="Voter ID card"
                         sx={{ width: '100%', maxWidth: 240, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
                       />
@@ -275,8 +285,8 @@ const Votes = () => {
                           <TableCell>
                             <Chip label={vote.status || 'pending'} size="small" variant="outlined"
                               sx={{ fontWeight: 500, textTransform: 'capitalize',
-                                color: vote.status === 'verified' ? '#16a34a' : vote.status === 'rejected' ? '#dc2626' : '#f59e0b',
-                                borderColor: vote.status === 'verified' ? '#16a34a' : vote.status === 'rejected' ? '#dc2626' : '#f59e0b' }} />
+                                color: vote.status === 'verified' ? 'primary.main' : vote.status === 'rejected' ? '#dc2626' : '#f59e0b',
+                                borderColor: vote.status === 'verified' ? 'primary.main' : vote.status === 'rejected' ? '#dc2626' : '#f59e0b' }} />
                           </TableCell>
                           <TableCell>
                             <Typography variant="caption" color="text.secondary">
@@ -357,7 +367,7 @@ const VoterRow = ({ voter, expanded, onToggle, onView }) => {
           {voter.voter_photo ? (
             <Box
               component="img"
-              src={`${UPLOADS_BASE}/uploads/${voter.voter_photo}`}
+              src={`${UPLOADS_BASE_URL}/uploads/${voter.voter_photo}`}
               alt="ID"
               sx={{ width: 48, height: 36, borderRadius: 0.5, objectFit: 'cover', border: '1px solid', borderColor: 'divider' }}
             />
@@ -368,7 +378,7 @@ const VoterRow = ({ voter, expanded, onToggle, onView }) => {
         <TableCell>{voter.location}</TableCell>
         <TableCell align="center">
           <Chip label={voter.votes.length} size="small"
-            sx={{ bgcolor: 'rgba(22,163,74,0.1)', color: '#16a34a', fontWeight: 600 }} />
+            sx={{ bgcolor: 'rgba(22,163,74,0.1)', color: 'primary.main', fontWeight: 600 }} />
         </TableCell>
         <TableCell>
           <Typography variant="caption" color="text.secondary">

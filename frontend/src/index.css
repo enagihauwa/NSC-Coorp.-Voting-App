@@ -91,7 +91,7 @@
 }
 
 .recharts-responsive-container {
-  min-height: 300px;
+  min-height: 0;
 }
 
 .MuiDataGrid-root {

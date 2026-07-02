@@ -22,6 +22,33 @@ const getSettings = async (req, res) => {
   }
 };
 
+const getPublicSettings = async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT key, value
+       FROM election_settings
+       WHERE key IN ('election_open', 'election_end_time', 'election_title')
+       ORDER BY key`
+    );
+
+    const settings = result.rows.reduce((acc, row) => {
+      acc[row.key] = row.value;
+      return acc;
+    }, {});
+
+    return res.json({
+      success: true,
+      data: settings,
+    });
+  } catch (error) {
+    console.error('Get public settings error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error.',
+    });
+  }
+};
+
 const updateSetting = async (req, res) => {
   try {
     const { key } = req.params;
@@ -126,4 +153,4 @@ const getActivityLogs = async (req, res) => {
   }
 };
 
-module.exports = { getSettings, updateSetting, getActivityLogs };
+module.exports = { getSettings, updateSetting, getActivityLogs, getPublicSettings };

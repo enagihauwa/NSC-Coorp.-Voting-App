@@ -8,20 +8,16 @@ import {
   Avatar,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import { API_BASE_URL } from '../utils/constants';
+import { resolvePhotoUrl } from '../utils/constants';
 
 const CandidateCard = ({ candidate, selected, onSelect, position }) => {
-  const photoUrl = candidate.photo
-    ? candidate.photo.startsWith('http')
-      ? candidate.photo
-      : `${API_BASE_URL}/uploads/${candidate.photo}`
-    : null;
+  const photoUrl = resolvePhotoUrl(candidate.photo);
 
   return (
     <Card
       sx={{
         border: selected ? '2px solid' : '2px solid transparent',
-        borderColor: selected ? '#16a34a' : 'transparent',
+        borderColor: selected ? 'primary.main' : 'transparent',
         transition: 'all 0.2s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -58,7 +54,7 @@ const CandidateCard = ({ candidate, selected, onSelect, position }) => {
             onChange={() => onSelect(candidate.id)}
             sx={{
               color: 'primary.light',
-              '&.Mui-checked': { color: '#16a34a' },
+              '&.Mui-checked': { color: 'primary.main' },
               '& .MuiSvgIcon-root': { fontSize: 28 },
             }}
           />

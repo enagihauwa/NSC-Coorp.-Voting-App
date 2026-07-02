@@ -1,6 +1,13 @@
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
 
+const ROLES = {
+  SUPERADMIN: 'superadmin',
+  ELECTION_OFFICER: 'election_officer',
+  AUDITOR: 'auditor',
+  ADMIN: 'admin',
+};
+
 const auth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -54,6 +61,7 @@ const checkRole = (...roles) => {
       return res.status(403).json({
         success: false,
         error: 'Access denied. Insufficient permissions.',
+        required_roles: roles,
       });
     }
 
@@ -61,4 +69,4 @@ const checkRole = (...roles) => {
   };
 };
 
-module.exports = { auth, checkRole };
+module.exports = { auth, checkRole, ROLES };

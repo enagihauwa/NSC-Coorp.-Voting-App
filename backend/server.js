@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -10,8 +11,10 @@ const fs = require('fs');
 
 const { pool } = require('./config/database');
 const routes = require('./routes/index');
+const { initSocket } = require('./socket/index');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 const uploadPath = process.env.UPLOAD_PATH || 'uploads';
@@ -126,8 +129,9 @@ async function initializeDatabase() {
 
 async function startServer() {
   await initializeDatabase();
+  initSocket(server);
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`NSC Voting API server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   });
@@ -135,4 +139,4 @@ async function startServer() {
 
 startServer();
 
-module.exports = app;
+module.exports = { app, server };

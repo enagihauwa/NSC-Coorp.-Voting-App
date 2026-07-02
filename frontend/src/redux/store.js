@@ -5,6 +5,7 @@ import candidateReducer from './candidateSlice';
 import voteReducer from './voteSlice';
 import resultReducer from './resultSlice';
 import adminReducer from './adminSlice';
+import runoffReducer from './runoffSlice';
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     votes: voteReducer,
     results: resultReducer,
     admin: adminReducer,
+    runoffs: runoffReducer,
   },
   devTools: true,
 });

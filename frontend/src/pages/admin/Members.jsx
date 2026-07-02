@@ -47,7 +47,7 @@ const Members = () => {
     { field: 'department', headerName: 'Department', flex: 1, minWidth: 150 },
     { field: 'location', headerName: 'Location', flex: 1, minWidth: 180 },
     { field: 'has_voted', headerName: 'Status', width: 110, renderCell: (p) => (
-      <Chip label={p.row.has_voted ? 'Voted' : 'Pending'} size="small" sx={{ fontWeight: 600, bgcolor: p.row.has_voted ? 'rgba(22,163,74,0.1)' : 'rgba(245,158,11,0.1)', color: p.row.has_voted ? '#16a34a' : '#d97706' }} />
+      <Chip label={p.row.has_voted ? 'Voted' : 'Pending'} size="small" sx={{ fontWeight: 600, bgcolor: p.row.has_voted ? 'rgba(22,163,74,0.1)' : 'rgba(245,158,11,0.1)', color: p.row.has_voted ? 'primary.main' : '#d97706' }} />
     )},
   ];
 
@@ -62,7 +62,7 @@ const Members = () => {
             <Typography variant="body2" color="text.secondary">View and manage registered cooperative members</Typography>
           </Box>
           <Button variant="contained" startIcon={<CloudUploadIcon />} onClick={handleImport}
-            sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, borderRadius: 2, px: 3 }}>
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, borderRadius: 2, px: 3 }}>
             Import CSV
           </Button>
         </Box>

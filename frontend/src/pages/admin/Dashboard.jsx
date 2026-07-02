@@ -18,12 +18,13 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { fetchDashboard } from '../../redux/adminSlice';
 import { fetchResults } from '../../redux/resultSlice';
+import { subscribeToAdminVotes } from '../../services/socket';
 
 const maskStaffNo = (s) => s ? s.slice(0, 3) + 'XXX' : s;
 
 const statCards = [
   { icon: PeopleIcon, label: 'Total Members', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  { icon: HowToVoteIcon, label: 'Votes Cast', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
+  { icon: HowToVoteIcon, label: 'Votes Cast', color: 'primary.main', bg: 'rgba(22,163,74,0.1)' },
   { icon: PendingActionsIcon, label: 'Pending Votes', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
   { icon: TrendingUpIcon, label: 'Turnout', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', suffix: '%' },
 ];
@@ -32,9 +33,20 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const { stats, loading } = useSelector((s) => s.admin);
   const { results } = useSelector((s) => s.results);
+  const { token } = useSelector((s) => s.auth);
   const [expandedVoter, setExpandedVoter] = useState(null);
 
   useEffect(() => { dispatch(fetchDashboard()); dispatch(fetchResults()); }, [dispatch]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    return subscribeToAdminVotes(token, (event) => {
+      if (event === 'results:updated' || event === 'vote:pending:new' || event === 'vote:status:changed') {
+        dispatch(fetchDashboard());
+        dispatch(fetchResults());
+      }
+    });
+  }, [dispatch, token]);
 
   const d = stats?.members || {};
   const totalMembers = d.total || 0;
@@ -108,7 +120,7 @@ const Dashboard = () => {
             <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
               <Typography variant="subtitle1" fontWeight={600} mb={2}>Votes per Position</Typography>
               {chartData.length > 0 ? (
-                <BarChartComponent data={chartData} xKey="name" bars={[{ dataKey: 'votes', fill: '#22c55e', name: 'Votes' }]} height={280} />
+                <BarChartComponent data={chartData} xKey="name" bars={[{ dataKey: 'votes', name: 'Votes' }]} height={280} />
               ) : (
                 <Typography color="text.secondary" textAlign="center" py={4}>No voting data yet</Typography>
               )}
@@ -120,9 +132,9 @@ const Dashboard = () => {
               <Box mb={3}>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body2" color="text.secondary">Turnout</Typography>
-                  <Typography variant="body2" fontWeight={600} color="#16a34a">{turnout}%</Typography>
+                  <Typography variant="body2" fontWeight={600} color="primary.main">{turnout}%</Typography>
                 </Box>
-                <LinearProgress variant="determinate" value={turnout} sx={{ height: 10, borderRadius: 5, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { bgcolor: '#16a34a', borderRadius: 5 } }} />
+                <LinearProgress variant="determinate" value={turnout} sx={{ height: 10, borderRadius: 5, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { bgcolor: 'primary.main', borderRadius: 5 } }} />
               </Box>
               <Box>
                 <Box display="flex" justifyContent="space-between" mb={1}>
@@ -137,7 +149,7 @@ const Dashboard = () => {
 
         <Box>
           <Box display="flex" alignItems="center" gap={1} mb={2}>
-            <AccessTimeIcon sx={{ color: '#16a34a', fontSize: 20 }} />
+            <AccessTimeIcon sx={{ color: 'primary.main', fontSize: 20 }} />
             <Typography variant="subtitle1" fontWeight={600}>Recent Voters</Typography>
           </Box>
           {groupedVoters.length > 0 ? (
@@ -154,7 +166,7 @@ const Dashboard = () => {
                   <Box key={voter.staff_number} sx={{ position: 'relative', ml: 0, mb: 2 }}>
                     <Box display="flex" alignItems="flex-start" gap={2}>
                       <Box sx={{ position: 'relative', zIndex: 1, mt: 0.5 }}>
-                        <Avatar sx={{ width: 40, height: 40, bgcolor: '#16a34a', fontSize: 16, fontWeight: 700 }}>
+                        <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontSize: 16, fontWeight: 700 }}>
                           {voter.member_name?.charAt(0) || <PersonIcon />}
                         </Avatar>
                       </Box>
@@ -173,7 +185,7 @@ const Dashboard = () => {
                             <Box display="flex" alignItems="center" gap={1} mt={0.25}>
                               <Typography variant="caption" color="text.secondary" fontFamily="monospace">{maskStaffNo(voter.staff_number)}</Typography>
                               <Chip label={`${voter.votes.length} position${voter.votes.length > 1 ? 's' : ''}`} size="small"
-                                sx={{ height: 20, fontSize: 11, bgcolor: 'rgba(22,163,74,0.08)', color: '#16a34a', fontWeight: 600 }} />
+                                sx={{ height: 20, fontSize: 11, bgcolor: 'rgba(22,163,74,0.08)', color: 'primary.main', fontWeight: 600 }} />
                               <Typography variant="caption" color="text.disabled">{timeAgo}</Typography>
                             </Box>
                           </Box>
@@ -185,7 +197,7 @@ const Dashboard = () => {
                           <Box sx={{ pb: 2, px: 2, borderTop: '1px solid', borderColor: 'divider', pt: 1.5 }}>
                             {voter.votes.map((vote) => {
                               const voteStatus = vote.status || 'pending';
-                              const statusColor = voteStatus === 'verified' ? '#16a34a' : voteStatus === 'rejected' ? '#dc2626' : '#f59e0b';
+                              const statusColor = voteStatus === 'verified' ? 'primary.main' : voteStatus === 'rejected' ? '#dc2626' : '#f59e0b';
                               return (
                                 <Box key={vote.id} display="flex" alignItems="center" gap={1.5} py={0.75}>
                                   <CheckCircleIcon sx={{ fontSize: 16, color: statusColor }} />

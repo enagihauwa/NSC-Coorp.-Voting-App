@@ -45,21 +45,21 @@ const members = [
 ];
 
 const candidates = [
-  { position_id: 1, fullname: 'Dr. Ngozi Okonjo-Iweala', manifesto: 'To lead with integrity, transparency, and a vision for a prosperous cooperative society where every member thrives.' },
-  { position_id: 1, fullname: 'Alhaji Aliko Dangote', manifesto: 'Bringing private sector discipline and business acumen to steer the cooperative towards sustainable growth.' },
-  { position_id: 2, fullname: 'Prof. Yemi Osinbajo', manifesto: 'Supporting the President with sound legal and administrative expertise for effective governance.' },
-  { position_id: 2, fullname: 'Senator Bola Tinubu', manifesto: 'Leveraging extensive leadership experience to strengthen the cooperative\'s impact at all levels.' },
-  { position_id: 3, fullname: 'Mrs. Folorunso Alakija', manifesto: 'Ensuring accurate records, transparent communication, and accountability across all cooperative activities.' },
-  { position_id: 3, fullname: 'Mr. Tony Elumelu', manifesto: 'Applying best practices in corporate governance to elevate the cooperative\'s administrative standards.' },
-  { position_id: 4, fullname: 'Mr. Wale Edun', manifesto: 'Prudent financial management, robust internal controls, and maximum returns on member investments.' },
-  { position_id: 4, fullname: 'Mrs. Ibukun Awosika', manifesto: 'Transparent treasury operations and sound fiscal policies to safeguard members\' funds.' },
-  { position_id: 5, fullname: 'Mr. Jim Ovia', manifesto: 'Strategic financial planning and innovative savings programs to enhance members\' financial well-being.' },
-  { position_id: 5, fullname: 'Dr. Ola Orekunrin', manifesto: 'Modernizing financial operations with technology for better service delivery and accountability.' },
-  { position_id: 6, fullname: 'Chief Olusegun Obasanjo', manifesto: 'Supporting the General Secretary in executing policies and ensuring smooth administrative operations.' },
-  { position_id: 6, fullname: 'Prof. Pat Utomi', manifesto: 'Strengthening the cooperative\'s administrative framework through proven management expertise.' },
-  { position_id: 7, fullname: 'Ms. Chimamanda Adichie', manifesto: 'Elevating the cooperative\'s public image through strategic communication and member engagement.' },
-  { position_id: 7, fullname: 'Mr. Dele Momodu', manifesto: 'Building strong media relationships and amplifying the cooperative\'s achievements to the public.' },
-  { position_id: 7, fullname: 'Mrs. Mo Abudu', manifesto: 'Leveraging media expertise to showcase the cooperative\'s impact and attract new members.' },
+  { position: 'President', fullname: 'Dr. Ngozi Okonjo-Iweala', manifesto: 'To lead with integrity, transparency, and a vision for a prosperous cooperative society where every member thrives.' },
+  { position: 'President', fullname: 'Alhaji Aliko Dangote', manifesto: 'Bringing private sector discipline and business acumen to steer the cooperative towards sustainable growth.' },
+  { position: 'Vice President', fullname: 'Prof. Yemi Osinbajo', manifesto: 'Supporting the President with sound legal and administrative expertise for effective governance.' },
+  { position: 'Vice President', fullname: 'Senator Bola Tinubu', manifesto: 'Leveraging extensive leadership experience to strengthen the cooperative\'s impact at all levels.' },
+  { position: 'General Secretary', fullname: 'Mrs. Folorunso Alakija', manifesto: 'Ensuring accurate records, transparent communication, and accountability across all cooperative activities.' },
+  { position: 'General Secretary', fullname: 'Mr. Tony Elumelu', manifesto: 'Applying best practices in corporate governance to elevate the cooperative\'s administrative standards.' },
+  { position: 'Treasurer', fullname: 'Mr. Wale Edun', manifesto: 'Prudent financial management, robust internal controls, and maximum returns on member investments.' },
+  { position: 'Treasurer', fullname: 'Mrs. Ibukun Awosika', manifesto: 'Transparent treasury operations and sound fiscal policies to safeguard members\' funds.' },
+  { position: 'Financial Secretary', fullname: 'Mr. Jim Ovia', manifesto: 'Strategic financial planning and innovative savings programs to enhance members\' financial well-being.' },
+  { position: 'Financial Secretary', fullname: 'Dr. Ola Orekunrin', manifesto: 'Modernizing financial operations with technology for better service delivery and accountability.' },
+  { position: 'Assistant General Secretary', fullname: 'Chief Olusegun Obasanjo', manifesto: 'Supporting the General Secretary in executing policies and ensuring smooth administrative operations.' },
+  { position: 'Assistant General Secretary', fullname: 'Prof. Pat Utomi', manifesto: 'Strengthening the cooperative\'s administrative framework through proven management expertise.' },
+  { position: 'Public Relations Officer', fullname: 'Ms. Chimamanda Adichie', manifesto: 'Elevating the cooperative\'s public image through strategic communication and member engagement.' },
+  { position: 'Public Relations Officer', fullname: 'Mr. Dele Momodu', manifesto: 'Building strong media relationships and amplifying the cooperative\'s achievements to the public.' },
+  { position: 'Public Relations Officer', fullname: 'Mrs. Mo Abudu', manifesto: 'Leveraging media expertise to showcase the cooperative\'s impact and attract new members.' },
 ];
 
 async function runSeeds() {
@@ -67,6 +67,16 @@ async function runSeeds() {
 
   try {
     console.log('Seeding database...');
+    const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (!seedAdminPassword) {
+      if (isProduction) {
+        throw new Error('SEED_ADMIN_PASSWORD is required in production.');
+      }
+      throw new Error('SEED_ADMIN_PASSWORD is required to seed admin credentials.');
+    }
+
     await client.query('BEGIN');
 
     // Seed positions
@@ -79,13 +89,25 @@ async function runSeeds() {
     console.log(`Positions seeded (${positions.length}).`);
 
     // Seed admin user
-    const adminHash = await bcrypt.hash('admin123', 10);
+    const adminHash = await bcrypt.hash(seedAdminPassword, 10);
     await client.query(
       `INSERT INTO admin_users (username, password_hash, role) 
        VALUES ($1, $2, 'admin') ON CONFLICT (username) DO NOTHING`,
       ['admin', adminHash]
     );
-    console.log('Default admin seeded (username: admin, password: admin123).');
+    const passwordResetColumnResult = await client.query(
+      `SELECT 1
+       FROM information_schema.columns
+       WHERE table_name = 'admin_users' AND column_name = 'must_change_password'`
+    );
+    if (passwordResetColumnResult.rows.length > 0) {
+      await client.query(
+        `UPDATE admin_users
+         SET must_change_password = TRUE
+         WHERE username = 'admin'`
+      );
+    }
+    console.log('Admin seeded (username: admin, password from SEED_ADMIN_PASSWORD).');
 
     // Seed members
     let memberCount = 0;
@@ -99,13 +121,29 @@ async function runSeeds() {
     }
     console.log(`Members seeded (${memberCount}).`);
 
+    const positionRows = await client.query(
+      'SELECT id, name FROM positions WHERE name = ANY($1::text[])',
+      [positions]
+    );
+    const positionIdByName = Object.fromEntries(
+      positionRows.rows.map((row) => [row.name, row.id])
+    );
+    const missingPositions = positions.filter((name) => !positionIdByName[name]);
+    if (missingPositions.length > 0) {
+      throw new Error(`Missing positions after seed: ${missingPositions.join(', ')}`);
+    }
+
     // Seed candidates
     let candidateCount = 0;
     for (const c of candidates) {
+      const positionId = positionIdByName[c.position];
+      if (!positionId) {
+        throw new Error(`Unknown position for candidate ${c.fullname}: ${c.position}`);
+      }
       const result = await client.query(
         `INSERT INTO candidates (position_id, fullname, manifesto, status) 
          VALUES ($1, $2, $3, 'active') ON CONFLICT DO NOTHING`,
-        [c.position_id, c.fullname, c.manifesto]
+        [positionId, c.fullname, c.manifesto]
       );
       if (result.rowCount > 0) candidateCount++;
     }
@@ -132,7 +170,7 @@ async function runSeeds() {
     console.log(`  Positions: ${positions.length}`);
     console.log(`  Members:   ${memberCount}`);
     console.log(`  Candidates: ${candidateCount}`);
-    console.log(`  Admin:     admin / admin123`);
+    console.log('  Admin:     admin / [SEED_ADMIN_PASSWORD]');
     console.log('--- Seeding completed successfully ---');
     process.exit(0);
   } catch (error) {

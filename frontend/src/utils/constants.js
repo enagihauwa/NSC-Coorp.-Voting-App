@@ -1,6 +1,6 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4003/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-// Static uploads are served from the server root (`/uploads`), not under `/api`.
+// Static uploads are served from the server root (`/4003uploads`), not under `/api`.
 export const UPLOADS_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 // Resolve a stored photo filename (or absolute URL) to a displayable src.

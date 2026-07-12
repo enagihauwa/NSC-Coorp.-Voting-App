@@ -106,16 +106,22 @@ const LocationResults = () => {
                       <Typography variant="subtitle2" fontWeight={600} mb={2}>Vote Distribution</Typography>
                       <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={3}>
                         <BarChartComponent
-                          data={chartData.map((d) => ({
-                            name: POSITION_LABELS[d.position] || d.position || d.name || 'Unknown',
-                            votes: d.votes || d.totalVotes || d.value || 0,
-                          }))}
+                          data={chartData.map((d) => {
+                            const label = d.position_name || d.position || d.name || 'Unknown';
+                            return {
+                              name: POSITION_LABELS[label] || label,
+                              votes: d.total_votes ?? d.votes ?? d.totalVotes ?? d.value ?? 0,
+                            };
+                          })}
                           xKey="name" bars={[{ dataKey: 'votes', name: 'Votes' }]} height={250} />
                         <PieChartComponent
-                          data={chartData.map((d) => ({
-                            name: POSITION_LABELS[d.position] || d.position || d.name || 'Unknown',
-                            value: d.votes || d.totalVotes || d.value || 0,
-                          }))}
+                          data={chartData.map((d) => {
+                            const label = d.position_name || d.position || d.name || 'Unknown';
+                            return {
+                              name: POSITION_LABELS[label] || label,
+                              value: d.total_votes ?? d.votes ?? d.totalVotes ?? d.value ?? 0,
+                            };
+                          })}
                           dataKey="value" nameKey="name" height={250} />
                       </Box>
                     </Box>
@@ -136,10 +142,11 @@ const LocationResults = () => {
                         {(Array.isArray(positionResults) ? positionResults : []).length > 0 ? (
                           positionResults.map((item, i) => {
                             const candidates = item.candidates || [];
+                            const posName = item.position_name || item.position || item.name;
                             if (candidates.length === 0) {
                               return (
                                 <TableRow key={i}>
-                                  <TableCell>{POSITION_LABELS[item.position] || item.position || item.name}</TableCell>
+                                  <TableCell>{POSITION_LABELS[posName] || posName}</TableCell>
                                   <TableCell colSpan={4} align="center">
                                     <Typography variant="caption" color="text.secondary">No data</Typography>
                                   </TableCell>
@@ -150,7 +157,7 @@ const LocationResults = () => {
                               <TableRow key={`${i}-${ci}`}>
                                 {ci === 0 && (
                                   <TableCell rowSpan={candidates.length}>
-                                    {POSITION_LABELS[item.position] || item.position || item.name}
+                                    {POSITION_LABELS[posName] || posName}
                                   </TableCell>
                                 )}
                                 <TableCell>{cand.fullname || cand.name || 'Unknown'}</TableCell>
@@ -164,7 +171,7 @@ const LocationResults = () => {
                                     {cand.location || '—'}
                                   </Typography>
                                 </TableCell>
-                                <TableCell align="right">{cand.votes || cand.voteCount || 0}</TableCell>
+                                <TableCell align="right">{cand.vote_count ?? cand.votes ?? cand.voteCount ?? 0}</TableCell>
                               </TableRow>
                             ));
                           })

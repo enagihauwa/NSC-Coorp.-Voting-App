@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS candidates (
   fullname VARCHAR(200) NOT NULL,
   photo VARCHAR(500),
   manifesto TEXT,
+  department VARCHAR(200),
+  location VARCHAR(200),
   status VARCHAR(20) DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

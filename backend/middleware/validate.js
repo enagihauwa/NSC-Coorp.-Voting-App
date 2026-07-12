@@ -76,6 +76,12 @@ const candidateRules = [
   body('manifesto')
     .optional()
     .trim(),
+  body('department')
+    .optional()
+    .trim(),
+  body('location')
+    .optional()
+    .trim(),
 ];
 
 const candidateUpdateRules = [
@@ -87,6 +93,12 @@ const candidateUpdateRules = [
     .isInt({ min: 1 })
     .withMessage('Position ID must be a positive integer'),
   body('manifesto')
+    .optional()
+    .trim(),
+  body('department')
+    .optional()
+    .trim(),
+  body('location')
     .optional()
     .trim(),
 ];

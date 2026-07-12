@@ -76,6 +76,23 @@ const RoundBlock = ({ round, announceWinners, onClose }) => {
                   {isWinner && <Chip icon={<EmojiEventsIcon sx={{ fontSize: 14 }} />} label="Winner" size="small"
                     sx={{ bgcolor: 'rgba(234,179,8,0.12)', color: '#ca8a04', fontWeight: 600, height: 24 }} />}
                 </Box>
+                {(c.department || c.location) && (
+                  <Box display="flex" gap={0.5} mb={0.5} flexWrap="wrap">
+                    {c.department && (
+                      <Typography variant="caption" color="text.secondary">
+                        {c.department}
+                      </Typography>
+                    )}
+                    {c.department && c.location && (
+                      <Typography variant="caption" color="text.secondary">·</Typography>
+                    )}
+                    {c.location && (
+                      <Typography variant="caption" color="text.secondary">
+                        {c.location}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
                 <Box display="flex" alignItems="center" gap={2}>
                   <Box flex={1}>
                     <LinearProgress variant="determinate" value={pct}
@@ -155,14 +172,14 @@ const Results = () => {
       Swal.fire('Nothing to export', 'There are no results to export yet.', 'info');
       return;
     }
-    const rows = [['Position', 'Round', 'Candidate', 'Votes', 'Percentage']];
+    const rows = [['Position', 'Round', 'Candidate', 'Department', 'Location', 'Votes', 'Percentage']];
     filteredPositions.forEach((pos) => {
       const p = getPosition(pos.id);
       (p?.rounds || []).forEach((round) => {
         if (round.candidates.length === 0) return;
         round.candidates.forEach((c) => {
           const pct = round.total_votes > 0 ? ((c.vote_count / round.total_votes) * 100).toFixed(1) : '0.0';
-          rows.push([pos.label, round.label, c.fullname, c.vote_count, `${pct}%`]);
+          rows.push([pos.label, round.label, c.fullname, c.department || '', c.location || '', c.vote_count, `${pct}%`]);
         });
       });
     });

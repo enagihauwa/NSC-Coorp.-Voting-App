@@ -21,15 +21,17 @@ import { fetchCandidates, createCandidate, updateCandidate, deleteCandidate, tog
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import ErrorBoundary from '../../components/ErrorBoundary';
-import { ELECTION_POSITIONS, resolvePhotoUrl } from '../../utils/constants';
+import { ELECTION_POSITIONS, DEPARTMENTS, LOCATIONS, resolvePhotoUrl } from '../../utils/constants';
 
 const schema = yup.object({
   fullname: yup.string().required('Candidate name is required'),
   position_id: yup.number().required('Position is required').positive().integer(),
   manifesto: yup.string().nullable(),
+  department: yup.string().nullable(),
+  location: yup.string().nullable(),
 });
 
-const defaultValues = { fullname: '', position_id: '', manifesto: '' };
+const defaultValues = { fullname: '', position_id: '', manifesto: '', department: '', location: '' };
 
 const Candidates = () => {
   const dispatch = useDispatch();
@@ -57,7 +59,7 @@ const Candidates = () => {
   const handleOpenEdit = (candidate) => {
     setEditing(candidate); setPhotoFile(null);
     setPhotoPreview(resolvePhotoUrl(candidate.photo) || null);
-    reset({ fullname: candidate.fullname || '', position_id: parseInt(candidate.position_id, 10) || '', manifesto: candidate.manifesto || '' });
+    reset({ fullname: candidate.fullname || '', position_id: parseInt(candidate.position_id, 10) || '', manifesto: candidate.manifesto || '', department: candidate.department || '', location: candidate.location || '' });
     setDialogOpen(true);
   };
 
@@ -72,6 +74,8 @@ const Candidates = () => {
     const fd = new FormData();
     fd.append('fullname', data.fullname); fd.append('position_id', data.position_id);
     if (data.manifesto) fd.append('manifesto', data.manifesto);
+    if (data.department) fd.append('department', data.department);
+    if (data.location) fd.append('location', data.location);
     if (photoFile) fd.append('photo', photoFile);
     setLocalError(null);
     const result = editing ? await dispatch(updateCandidate({ id: editing.id, data: fd })) : await dispatch(createCandidate(fd));
@@ -106,6 +110,8 @@ const Candidates = () => {
     )},
     { field: 'fullname', headerName: 'Name', flex: 1.5, minWidth: 180 },
     { field: 'position_name', headerName: 'Position', flex: 1, minWidth: 150, valueGetter: (value, row) => value || getPositionLabel(row?.position_id) },
+    { field: 'department', headerName: 'Department', flex: 1, minWidth: 150, valueGetter: (value) => value || '—' },
+    { field: 'location', headerName: 'Location', flex: 1, minWidth: 150, valueGetter: (value) => value || '—' },
     { field: 'status', headerName: 'Status', width: 100, renderCell: (p) => (
       <Chip label={p.row.status === 'active' ? 'Active' : 'Inactive'} size="small" sx={{ fontWeight: 600, bgcolor: p.row.status === 'active' ? 'rgba(22,163,74,0.1)' : 'rgba(239,68,68,0.1)', color: p.row.status === 'active' ? 'primary.main' : '#ef4444' }} />
     )},
@@ -126,7 +132,7 @@ const Candidates = () => {
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
           <Box>
             <Typography variant="h5" fontWeight={700}>Candidates</Typography>
-            <Typography variant="body2" color="text.secondary">Manage election candidates and their positions</Typography>
+            <Typography variant="body2" color="text.secondary">Manage election candidates, positions, departments and locations</Typography>
           </Box>
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAdd} sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, borderRadius: 2, px: 3, py: 1 }}>Add Candidate</Button>
         </Box>
@@ -161,6 +167,18 @@ const Candidates = () => {
               <Controller name="position_id" control={control} render={({ field }) => (
                 <TextField {...field} fullWidth select label="Position" error={!!errors.position_id} helperText={errors.position_id?.message} sx={{ mb: 2.5 }}>
                   {ELECTION_POSITIONS.map((pos) => <MenuItem key={pos.id} value={pos.id}>{pos.label}</MenuItem>)}
+                </TextField>
+              )} />
+              <Controller name="department" control={control} render={({ field }) => (
+                <TextField {...field} fullWidth select label="Department" sx={{ mb: 2.5 }}>
+                  <MenuItem value="">None</MenuItem>
+                  {DEPARTMENTS.map((dept) => <MenuItem key={dept} value={dept}>{dept}</MenuItem>)}
+                </TextField>
+              )} />
+              <Controller name="location" control={control} render={({ field }) => (
+                <TextField {...field} fullWidth select label="Location" sx={{ mb: 2.5 }}>
+                  <MenuItem value="">None</MenuItem>
+                  {LOCATIONS.map((loc) => <MenuItem key={loc} value={loc}>{loc}</MenuItem>)}
                 </TextField>
               )} />
               <TextField fullWidth multiline rows={4} label="Manifesto" {...register('manifesto')} sx={{ mb: 2 }} />

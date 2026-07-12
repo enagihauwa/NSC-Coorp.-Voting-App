@@ -70,6 +70,8 @@ const Votes = () => {
         id: v.id,
         position_name: v.position_name,
         candidate_name: v.candidate_name,
+        candidate_department: v.candidate_department,
+        candidate_location: v.candidate_location,
         created_at: v.created_at,
         status: v.status || 'pending',
         rejection_reason: v.rejection_reason || null,
@@ -125,7 +127,7 @@ const Votes = () => {
 
   const handleExport = () => {
     if (!groupedVoters.length) return;
-    const rows = [['Staff No.', 'Member', 'Location', 'Position', 'Candidate', 'Date']];
+    const rows = [['Staff No.', 'Member', 'Location', 'Position', 'Candidate', 'Candidate Dept', 'Candidate Location', 'Date']];
     groupedVoters.forEach((v) => {
       v.votes.forEach((vote) => {
         rows.push([
@@ -134,6 +136,8 @@ const Votes = () => {
           v.location,
           vote.position_name,
           vote.candidate_name,
+          vote.candidate_department || '',
+          vote.candidate_location || '',
           vote.created_at ? new Date(vote.created_at).toLocaleString() : '',
         ]);
       });
@@ -268,6 +272,9 @@ const Votes = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600 }}>Position</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Rejection Reason</TableCell>
@@ -277,6 +284,17 @@ const Votes = () => {
                       {selectedVoter.votes.map((vote) => (
                         <TableRow key={vote.id}>
                           <TableCell>{vote.position_name}</TableCell>
+                          <TableCell>{vote.candidate_name}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {vote.candidate_department || '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {vote.candidate_location || '—'}
+                            </Typography>
+                          </TableCell>
                           <TableCell>
                             <Typography variant="body2">
                               {vote.created_at ? new Date(vote.created_at).toLocaleString() : 'N/A'}

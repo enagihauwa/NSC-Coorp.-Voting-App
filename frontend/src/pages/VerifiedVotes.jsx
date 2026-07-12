@@ -111,32 +111,49 @@ const CandidateBars = ({ round, barColor }) => {
         const pct = round.total_votes > 0 ? (c.vote_count / round.total_votes) * 100 : 0;
         const isWinner = round.winner && round.winner.id === c.id;
         return (
-          <Box key={c.id} mb={1.5}>
-            <Box display="flex" alignItems="flex-start" gap={1.5} mb={0.75} flexWrap={{ xs: 'wrap', sm: 'nowrap' }}>
-              <Avatar src={resolvePhotoUrl(c.photo)} sx={{ width: 36, height: 36, bgcolor: 'action.hover' }}>
-                {!c.photo && <PersonIcon sx={{ fontSize: 18 }} />}
-              </Avatar>
-              <Box flex={1} minWidth={0}>
-                <Box display="flex" alignItems="center" gap={0.75} flexWrap="wrap">
-                  <Typography variant="body2" fontWeight={600} sx={{ wordBreak: 'break-word' }}>
-                    {c.fullname}
-                  </Typography>
-                  {isWinner && (
-                    <Chip
-                      icon={<EmojiEventsIcon sx={{ fontSize: '14px !important' }} />}
-                      label="Leading"
-                      size="small"
-                      sx={{
-                        height: 22,
-                        fontWeight: 600,
-                        bgcolor: alpha('#ca8a04', 0.12),
-                        color: '#a16207',
-                        '& .MuiChip-icon': { color: '#ca8a04' },
-                      }}
-                    />
-                  )}
-                </Box>
-              </Box>
+                <Box key={c.id} mb={1.5}>
+                  <Box display="flex" alignItems="flex-start" gap={1.5} mb={0.75} flexWrap={{ xs: 'wrap', sm: 'nowrap' }}>
+                    <Avatar src={resolvePhotoUrl(c.photo)} sx={{ width: 36, height: 36, bgcolor: 'action.hover' }}>
+                      {!c.photo && <PersonIcon sx={{ fontSize: 18 }} />}
+                    </Avatar>
+                    <Box flex={1} minWidth={0}>
+                      <Box display="flex" alignItems="center" gap={0.75} flexWrap="wrap">
+                        <Typography variant="body2" fontWeight={600} sx={{ wordBreak: 'break-word' }}>
+                          {c.fullname}
+                        </Typography>
+                        {isWinner && (
+                          <Chip
+                            icon={<EmojiEventsIcon sx={{ fontSize: '14px !important' }} />}
+                            label="Leading"
+                            size="small"
+                            sx={{
+                              height: 22,
+                              fontWeight: 600,
+                              bgcolor: alpha('#ca8a04', 0.12),
+                              color: '#a16207',
+                              '& .MuiChip-icon': { color: '#ca8a04' },
+                            }}
+                          />
+                        )}
+                      </Box>
+                      {(c.department || c.location) && (
+                        <Box display="flex" gap={0.5} mt={0.25} flexWrap="wrap">
+                          {c.department && (
+                            <Typography variant="caption" color="text.secondary">
+                              {c.department}
+                            </Typography>
+                          )}
+                          {c.department && c.location && (
+                            <Typography variant="caption" color="text.secondary">·</Typography>
+                          )}
+                          {c.location && (
+                            <Typography variant="caption" color="text.secondary">
+                              {c.location}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
               <Typography variant="body2" fontWeight={700} sx={{ whiteSpace: 'nowrap' }}>
                 {c.vote_count}
                 <Typography variant="caption" color="text.disabled" component="span" sx={{ ml: 0.5 }}>

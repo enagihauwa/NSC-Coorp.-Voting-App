@@ -268,7 +268,8 @@ const getAll = async (req, res) => {
 
     const result = await query(
       `SELECT v.*, m.fullname as member_name, m.staff_number, 
-              p.name as position_name, c.fullname as candidate_name
+              p.name as position_name, c.fullname as candidate_name,
+              c.department as candidate_department, c.location as candidate_location
        FROM votes v
        JOIN members m ON v.member_id = m.id
        JOIN positions p ON v.position_id = p.id
@@ -366,12 +367,13 @@ const getVerified = async (req, res) => {
     const verifiedResult = await query(
       `SELECT p.id as position_id, p.name as position_name,
               c.fullname as candidate_name, c.photo as candidate_photo,
+              c.department as candidate_department, c.location as candidate_location,
               COUNT(v.id) as vote_count
        FROM votes v
        JOIN positions p ON v.position_id = p.id
        JOIN candidates c ON v.candidate_id = c.id
        WHERE v.status = 'verified'
-       GROUP BY p.id, p.name, c.id, c.fullname, c.photo
+       GROUP BY p.id, p.name, c.id, c.fullname, c.photo, c.department, c.location
        ORDER BY p.id, vote_count DESC`
     );
 
@@ -392,6 +394,8 @@ const getVerified = async (req, res) => {
       positions[row.position_id].candidates.push({
         fullname: row.candidate_name,
         photo: row.candidate_photo,
+        department: row.candidate_department,
+        location: row.candidate_location,
         vote_count: parseInt(row.vote_count, 10),
       });
       positions[row.position_id].total_votes += parseInt(row.vote_count, 10);
@@ -423,7 +427,8 @@ const getByMember = async (req, res) => {
     }
 
     const result = await query(
-      `SELECT v.*, p.name as position_name, c.fullname as candidate_name, c.photo as candidate_photo
+      `SELECT v.*, p.name as position_name, c.fullname as candidate_name, c.photo as candidate_photo,
+              c.department as candidate_department, c.location as candidate_location
        FROM votes v
        JOIN positions p ON v.position_id = p.id
        JOIN candidates c ON v.candidate_id = c.id

@@ -45,7 +45,12 @@ const RunoffItem = ({ runoff }) => {
               Runoff in progress — {runoff.position_name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Tie-breaker between {runoff.candidates.map((c) => c.fullname).join(' & ')}
+              Tie-breaker between {runoff.candidates.map((c) => {
+                let label = c.fullname;
+                if (c.department) label += ` (${c.department})`;
+                if (c.location) label += ` - ${c.location}`;
+                return label;
+              }).join(' & ')}
             </Typography>
           </Box>
         </Box>

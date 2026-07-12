@@ -15,11 +15,11 @@ const getResults = async (req, res) => {
 
     for (const position of positionsResult.rows) {
       const votesResult = await query(
-        `SELECT c.id, c.fullname, c.photo, COUNT(v.id) as vote_count
+        `SELECT c.id, c.fullname, c.photo, c.department, c.location, COUNT(v.id) as vote_count
          FROM candidates c
          LEFT JOIN votes v ON c.id = v.candidate_id AND v.position_id = $1 AND v.status = 'verified'
          WHERE c.position_id = $1
-         GROUP BY c.id, c.fullname, c.photo
+         GROUP BY c.id, c.fullname, c.photo, c.department, c.location
          ORDER BY vote_count DESC`,
         [position.id]
       );
@@ -33,6 +33,8 @@ const getResults = async (req, res) => {
         id: row.id,
         fullname: row.fullname,
         photo: row.photo,
+        department: row.department,
+        location: row.location,
         vote_count: parseInt(row.vote_count, 10),
         percentage: totalVotesForPosition > 0
           ? parseFloat(((parseInt(row.vote_count, 10) / totalVotesForPosition) * 100).toFixed(2))
@@ -94,11 +96,11 @@ const getLocationResults = async (req, res) => {
 
       for (const position of positionsResult.rows) {
         const candidatesResult = await query(
-          `SELECT c.fullname, COUNT(v.id) as vote_count
+          `SELECT c.fullname, c.department, c.location, COUNT(v.id) as vote_count
            FROM candidates c
            LEFT JOIN votes v ON c.id = v.candidate_id AND v.position_id = $1 AND v.location = $2 AND v.status = 'verified'
            WHERE c.position_id = $1
-           GROUP BY c.id, c.fullname
+           GROUP BY c.id, c.fullname, c.department, c.location
            ORDER BY vote_count DESC`,
           [position.id, locationName]
         );
@@ -113,6 +115,8 @@ const getLocationResults = async (req, res) => {
           total_votes: positionTotal,
           candidates: candidatesResult.rows.map((r) => ({
             fullname: r.fullname,
+            department: r.department,
+            location: r.location,
             vote_count: parseInt(r.vote_count, 10),
           })),
         });

@@ -111,7 +111,7 @@ const getById = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { fullname, position_id, manifesto } = req.body;
+    const { fullname, position_id, manifesto, department, location } = req.body;
     const photo = req.file ? req.file.filename : null;
 
     const posResult = await query('SELECT id FROM positions WHERE id = $1', [position_id]);
@@ -126,9 +126,9 @@ const create = async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO candidates (position_id, fullname, photo, manifesto) 
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [position_id, fullname, photo, manifesto || null]
+      `INSERT INTO candidates (position_id, fullname, photo, manifesto, department, location) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [position_id, fullname, photo, manifesto || null, department || null, location || null]
     );
 
     await query(
@@ -156,7 +156,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullname, position_id, manifesto } = req.body;
+    const { fullname, position_id, manifesto, department, location } = req.body;
 
     const existing = await query('SELECT * FROM candidates WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
@@ -195,13 +195,16 @@ const update = async (req, res) => {
 
     const result = await query(
       `UPDATE candidates 
-       SET fullname = $1, position_id = $2, photo = $3, manifesto = $4 
-       WHERE id = $5 RETURNING *`,
+       SET fullname = $1, position_id = $2, photo = $3, manifesto = $4, 
+           department = $5, location = $6
+       WHERE id = $7 RETURNING *`,
       [
         fullname || candidate.fullname,
         position_id || candidate.position_id,
         newPhoto,
         manifesto !== undefined ? manifesto : candidate.manifesto,
+        department !== undefined ? department : candidate.department,
+        location !== undefined ? location : candidate.location,
         id,
       ]
     );

@@ -52,7 +52,7 @@ const getAll = async (req, res) => {
     params.push(offset);
 
     const result = await query(
-      `SELECT m.* FROM members m ${whereStr} ORDER BY m.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      `SELECT m.* FROM members m ${whereStr} ORDER BY m.staff_number ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       params
     );
 
@@ -127,6 +127,8 @@ const getByStaffNumber = async (req, res) => {
         id: member.id,
         staff_number: member.staff_number,
         fullname: member.fullname,
+        department: member.department,
+        location: member.location,
         has_voted: member.has_voted,
       },
     });

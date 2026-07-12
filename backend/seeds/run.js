@@ -45,21 +45,21 @@ const members = [
 ];
 
 const candidates = [
-  { position: 'President', fullname: 'Dr. Ngozi Okonjo-Iweala', manifesto: 'To lead with integrity, transparency, and a vision for a prosperous cooperative society where every member thrives.' },
-  { position: 'President', fullname: 'Alhaji Aliko Dangote', manifesto: 'Bringing private sector discipline and business acumen to steer the cooperative towards sustainable growth.' },
-  { position: 'Vice President', fullname: 'Prof. Yemi Osinbajo', manifesto: 'Supporting the President with sound legal and administrative expertise for effective governance.' },
-  { position: 'Vice President', fullname: 'Senator Bola Tinubu', manifesto: 'Leveraging extensive leadership experience to strengthen the cooperative\'s impact at all levels.' },
-  { position: 'General Secretary', fullname: 'Mrs. Folorunso Alakija', manifesto: 'Ensuring accurate records, transparent communication, and accountability across all cooperative activities.' },
-  { position: 'General Secretary', fullname: 'Mr. Tony Elumelu', manifesto: 'Applying best practices in corporate governance to elevate the cooperative\'s administrative standards.' },
-  { position: 'Treasurer', fullname: 'Mr. Wale Edun', manifesto: 'Prudent financial management, robust internal controls, and maximum returns on member investments.' },
-  { position: 'Treasurer', fullname: 'Mrs. Ibukun Awosika', manifesto: 'Transparent treasury operations and sound fiscal policies to safeguard members\' funds.' },
-  { position: 'Financial Secretary', fullname: 'Mr. Jim Ovia', manifesto: 'Strategic financial planning and innovative savings programs to enhance members\' financial well-being.' },
-  { position: 'Financial Secretary', fullname: 'Dr. Ola Orekunrin', manifesto: 'Modernizing financial operations with technology for better service delivery and accountability.' },
-  { position: 'Assistant General Secretary', fullname: 'Chief Olusegun Obasanjo', manifesto: 'Supporting the General Secretary in executing policies and ensuring smooth administrative operations.' },
-  { position: 'Assistant General Secretary', fullname: 'Prof. Pat Utomi', manifesto: 'Strengthening the cooperative\'s administrative framework through proven management expertise.' },
-  { position: 'Public Relations Officer', fullname: 'Ms. Chimamanda Adichie', manifesto: 'Elevating the cooperative\'s public image through strategic communication and member engagement.' },
-  { position: 'Public Relations Officer', fullname: 'Mr. Dele Momodu', manifesto: 'Building strong media relationships and amplifying the cooperative\'s achievements to the public.' },
-  { position: 'Public Relations Officer', fullname: 'Mrs. Mo Abudu', manifesto: 'Leveraging media expertise to showcase the cooperative\'s impact and attract new members.' },
+  { position: 'President', fullname: 'Dr. Ngozi Okonjo-Iweala', manifesto: 'To lead with integrity, transparency, and a vision for a prosperous cooperative society where every member thrives.', department: 'Finance & Accounts', location: 'Headquarters - Lagos' },
+  { position: 'President', fullname: 'Alhaji Aliko Dangote', manifesto: 'Bringing private sector discipline and business acumen to steer the cooperative towards sustainable growth.', department: 'Marine & Operations', location: 'Apapa Area Command' },
+  { position: 'Vice President', fullname: 'Prof. Yemi Osinbajo', manifesto: 'Supporting the President with sound legal and administrative expertise for effective governance.', department: 'Legal Services', location: 'Headquarters - Lagos' },
+  { position: 'Vice President', fullname: 'Senator Bola Tinubu', manifesto: 'Leveraging extensive leadership experience to strengthen the cooperative\'s impact at all levels.', department: 'Administration', location: 'Liaison Office - Abuja' },
+  { position: 'General Secretary', fullname: 'Mrs. Folorunso Alakija', manifesto: 'Ensuring accurate records, transparent communication, and accountability across all cooperative activities.', department: 'Corporate Affairs', location: 'Headquarters - Lagos' },
+  { position: 'General Secretary', fullname: 'Mr. Tony Elumelu', manifesto: 'Applying best practices in corporate governance to elevate the cooperative\'s administrative standards.', department: 'Finance & Accounts', location: 'Tin Can Island Command' },
+  { position: 'Treasurer', fullname: 'Mr. Wale Edun', manifesto: 'Prudent financial management, robust internal controls, and maximum returns on member investments.', department: 'Finance & Accounts', location: 'Headquarters - Lagos' },
+  { position: 'Treasurer', fullname: 'Mrs. Ibukun Awosika', manifesto: 'Transparent treasury operations and sound fiscal policies to safeguard members\' funds.', department: 'Internal Audit', location: 'Eastern Ports Command' },
+  { position: 'Financial Secretary', fullname: 'Mr. Jim Ovia', manifesto: 'Strategic financial planning and innovative savings programs to enhance members\' financial well-being.', department: 'Information Technology', location: 'Headquarters - Lagos' },
+  { position: 'Financial Secretary', fullname: 'Dr. Ola Orekunrin', manifesto: 'Modernizing financial operations with technology for better service delivery and accountability.', department: 'Information Technology', location: 'Western Ports Command' },
+  { position: 'Assistant General Secretary', fullname: 'Chief Olusegun Obasanjo', manifesto: 'Supporting the General Secretary in executing policies and ensuring smooth administrative operations.', department: 'Administration', location: 'Liaison Office - Port Harcourt' },
+  { position: 'Assistant General Secretary', fullname: 'Prof. Pat Utomi', manifesto: 'Strengthening the cooperative\'s administrative framework through proven management expertise.', department: 'Research & Statistics', location: 'Headquarters - Lagos' },
+  { position: 'Public Relations Officer', fullname: 'Ms. Chimamanda Adichie', manifesto: 'Elevating the cooperative\'s public image through strategic communication and member engagement.', department: 'Corporate Affairs', location: 'Eastern Ports Command' },
+  { position: 'Public Relations Officer', fullname: 'Mr. Dele Momodu', manifesto: 'Building strong media relationships and amplifying the cooperative\'s achievements to the public.', department: 'Corporate Affairs', location: 'Liaison Office - Abuja' },
+  { position: 'Public Relations Officer', fullname: 'Mrs. Mo Abudu', manifesto: 'Leveraging media expertise to showcase the cooperative\'s impact and attract new members.', department: 'Corporate Affairs', location: 'Headquarters - Lagos' },
 ];
 
 async function runSeeds() {
@@ -141,9 +141,13 @@ async function runSeeds() {
         throw new Error(`Unknown position for candidate ${c.fullname}: ${c.position}`);
       }
       const result = await client.query(
-        `INSERT INTO candidates (position_id, fullname, manifesto, status) 
-         VALUES ($1, $2, $3, 'active') ON CONFLICT DO NOTHING`,
-        [positionId, c.fullname, c.manifesto]
+        `INSERT INTO candidates (position_id, fullname, manifesto, department, location, status) 
+         VALUES ($1, $2, $3, $4, $5, 'active')
+         ON CONFLICT (position_id, fullname) DO UPDATE SET
+           manifesto = EXCLUDED.manifesto,
+           department = EXCLUDED.department,
+           location = EXCLUDED.location`,
+        [positionId, c.fullname, c.manifesto, c.department || null, c.location || null]
       );
       if (result.rowCount > 0) candidateCount++;
     }

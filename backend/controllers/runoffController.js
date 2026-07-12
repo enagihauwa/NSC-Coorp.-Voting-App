@@ -18,6 +18,8 @@ const parseCounts = (rows) =>
     id: r.id,
     fullname: r.fullname,
     photo: r.photo,
+    department: r.department,
+    location: r.location,
     vote_count: parseInt(r.vote_count, 10),
   }));
 
@@ -36,11 +38,11 @@ const analyzeTally = (candidates) => {
 // Verified tally for the main election (round 1) of a position.
 const mainElectionTally = async (positionId, runner = query) => {
   const res = await runner(
-    `SELECT c.id, c.fullname, c.photo, COUNT(v.id) AS vote_count
+    `SELECT c.id, c.fullname, c.photo, c.department, c.location, COUNT(v.id) AS vote_count
      FROM candidates c
      LEFT JOIN votes v ON v.candidate_id = c.id AND v.position_id = $1 AND v.status = 'verified'
      WHERE c.position_id = $1
-     GROUP BY c.id, c.fullname, c.photo
+     GROUP BY c.id, c.fullname, c.photo, c.department, c.location
      ORDER BY vote_count DESC, c.id ASC`,
     [positionId]
   );
@@ -50,12 +52,12 @@ const mainElectionTally = async (positionId, runner = query) => {
 // Verified tally for a specific runoff round.
 const runoffTally = async (runoffId, runner = query) => {
   const res = await runner(
-    `SELECT c.id, c.fullname, c.photo, COUNT(rv.id) AS vote_count
+    `SELECT c.id, c.fullname, c.photo, c.department, c.location, COUNT(rv.id) AS vote_count
      FROM runoff_candidates rc
      JOIN candidates c ON c.id = rc.candidate_id
      LEFT JOIN runoff_votes rv ON rv.candidate_id = c.id AND rv.runoff_id = $1 AND rv.status = 'verified'
      WHERE rc.runoff_id = $1
-     GROUP BY c.id, c.fullname, c.photo
+     GROUP BY c.id, c.fullname, c.photo, c.department, c.location
      ORDER BY vote_count DESC, c.id ASC`,
     [runoffId]
   );
@@ -201,7 +203,7 @@ const createRunoff = async (req, res) => {
 
 const loadRunoffCandidates = async (runoffId) => {
   const res = await query(
-    `SELECT c.id, c.fullname, c.photo
+    `SELECT c.id, c.fullname, c.photo, c.department, c.location
      FROM runoff_candidates rc JOIN candidates c ON c.id = rc.candidate_id
      WHERE rc.runoff_id = $1 ORDER BY c.id ASC`,
     [runoffId]
@@ -362,7 +364,7 @@ const getRunoffVotes = async (req, res) => {
       `SELECT rv.id, rv.member_id, rv.candidate_id, rv.location, rv.voter_photo, rv.status,
               rv.rejection_reason, rv.created_at,
               m.fullname AS member_name, m.staff_number,
-              c.fullname AS candidate_name
+              c.fullname AS candidate_name, c.department AS candidate_department, c.location AS candidate_location
        FROM runoff_votes rv
        JOIN members m ON m.id = rv.member_id
        JOIN candidates c ON c.id = rv.candidate_id

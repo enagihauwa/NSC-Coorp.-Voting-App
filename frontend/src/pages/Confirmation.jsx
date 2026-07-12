@@ -173,6 +173,8 @@ const Confirmation = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Position</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Selected Candidate</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
                   <TableCell sx={{ fontWeight: 600, width: 80 }}>Edit</TableCell>
                 </TableRow>
               </TableHead>
@@ -185,6 +187,16 @@ const Confirmation = () => {
                         <Chip icon={<CheckCircleIcon />} label={item.details?.candidate?.fullname || 'Selected'} size="small"
                           sx={{ bgcolor: 'rgba(22,163,74,0.1)', color: 'primary.main', fontWeight: 500 }} />
                       </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.details?.candidate?.department || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.details?.candidate?.location || '—'}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <IconButton size="small" onClick={() => handleOpenEdit(item.id)} color="primary">
@@ -205,6 +217,23 @@ const Confirmation = () => {
                     <Typography variant="body2" fontWeight={600} mt={0.5}>
                       {item.details?.candidate?.fullname || 'Selected'}
                     </Typography>
+                    {(item.details?.candidate?.department || item.details?.candidate?.location) && (
+                      <Box display="flex" gap={0.5} mt={0.5} flexWrap="wrap">
+                        {item.details?.candidate?.department && (
+                          <Typography variant="caption" color="text.secondary">
+                            {item.details.candidate.department}
+                          </Typography>
+                        )}
+                        {item.details?.candidate?.department && item.details?.candidate?.location && (
+                          <Typography variant="caption" color="text.secondary">·</Typography>
+                        )}
+                        {item.details?.candidate?.location && (
+                          <Typography variant="caption" color="text.secondary">
+                            {item.details.candidate.location}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
                   </Box>
                   <IconButton size="small" onClick={() => handleOpenEdit(item.id)} color="primary">
                     <EditIcon fontSize="small" />

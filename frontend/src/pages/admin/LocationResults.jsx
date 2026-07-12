@@ -127,6 +127,8 @@ const LocationResults = () => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600 }}>Position</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">Votes</TableCell>
                         </TableRow>
                       </TableHead>
@@ -138,7 +140,7 @@ const LocationResults = () => {
                               return (
                                 <TableRow key={i}>
                                   <TableCell>{POSITION_LABELS[item.position] || item.position || item.name}</TableCell>
-                                  <TableCell colSpan={2} align="center">
+                                  <TableCell colSpan={4} align="center">
                                     <Typography variant="caption" color="text.secondary">No data</Typography>
                                   </TableCell>
                                 </TableRow>
@@ -152,6 +154,16 @@ const LocationResults = () => {
                                   </TableCell>
                                 )}
                                 <TableCell>{cand.fullname || cand.name || 'Unknown'}</TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {cand.department || '—'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {cand.location || '—'}
+                                  </Typography>
+                                </TableCell>
                                 <TableCell align="right">{cand.votes || cand.voteCount || 0}</TableCell>
                               </TableRow>
                             ));
@@ -160,7 +172,7 @@ const LocationResults = () => {
                           ELECTION_POSITIONS.map((pos) => (
                             <TableRow key={pos.id}>
                               <TableCell>{pos.label}</TableCell>
-                              <TableCell colSpan={2} align="center">
+                              <TableCell colSpan={4} align="center">
                                 <Typography variant="caption" color="text.secondary">No candidates</Typography>
                               </TableCell>
                             </TableRow>

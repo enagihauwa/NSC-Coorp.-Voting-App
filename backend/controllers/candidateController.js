@@ -29,7 +29,10 @@ const getAll = async (req, res) => {
     const whereStr = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     const countResult = await query(
-      `SELECT COUNT(*) FROM candidates c ${whereStr}`,
+      `SELECT COUNT(*) FROM (
+        SELECT DISTINCT ON (c.fullname, c.position_id) c.id
+        FROM candidates c ${whereStr}
+      ) sub`,
       params
     );
     const total = parseInt(countResult.rows[0].count, 10);
@@ -38,11 +41,11 @@ const getAll = async (req, res) => {
     params.push(offset);
 
     const result = await query(
-      `SELECT c.*, p.name as position_name 
+      `SELECT DISTINCT ON (c.fullname, c.position_id) c.*, p.name as position_name 
        FROM candidates c 
        JOIN positions p ON c.position_id = p.id 
        ${whereStr} 
-       ORDER BY c.position_id, c.fullname 
+       ORDER BY c.fullname, c.position_id, c.id
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       params
     );

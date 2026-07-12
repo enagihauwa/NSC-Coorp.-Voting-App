@@ -105,7 +105,7 @@ const Candidates = () => {
       <Avatar src={resolvePhotoUrl(p.row.photo)} sx={{ width: 36, height: 36 }}><PersonIcon fontSize="small" /></Avatar>
     )},
     { field: 'fullname', headerName: 'Name', flex: 1.5, minWidth: 180 },
-    { field: 'position_name', headerName: 'Position', flex: 1, minWidth: 150, valueGetter: (p) => p?.row?.position_name || getPositionLabel(p?.row?.position_id) },
+    { field: 'position_name', headerName: 'Position', flex: 1, minWidth: 150, valueGetter: (value, row) => value || getPositionLabel(row?.position_id) },
     { field: 'status', headerName: 'Status', width: 100, renderCell: (p) => (
       <Chip label={p.row.status === 'active' ? 'Active' : 'Inactive'} size="small" sx={{ fontWeight: 600, bgcolor: p.row.status === 'active' ? 'rgba(22,163,74,0.1)' : 'rgba(239,68,68,0.1)', color: p.row.status === 'active' ? 'primary.main' : '#ef4444' }} />
     )},

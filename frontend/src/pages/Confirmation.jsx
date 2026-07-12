@@ -1,16 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, Stack, useMediaQuery, useTheme,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  FormControl, InputLabel, Select, MenuItem, IconButton,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import BadgeIcon from '@mui/icons-material/Badge';
+import EditIcon from '@mui/icons-material/Edit';
 import Swal from 'sweetalert2';
 import { submitVote, resetSubmissionStatus } from '../redux/voteSlice';
+import { fetchCandidates } from '../redux/candidateSlice';
 import IdCardUpload from '../components/CameraCapture';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -23,21 +27,70 @@ const Confirmation = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { submissionStatus, loading, error } = useSelector((state) => state.votes);
+  const { candidates } = useSelector((state) => state.candidates);
   const [voterPhoto, setVoterPhoto] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editPositionId, setEditPositionId] = useState(null);
+  const [editCandidateId, setEditCandidateId] = useState('');
 
-  const selections = useMemo(() => {
+  const [selections, setSelections] = useState(() => {
     try { const d = localStorage.getItem(STORAGE_KEYS.VOTE_SELECTIONS); return d ? JSON.parse(d) : {}; } catch { return {}; }
-  }, []);
+  });
 
   const voteData = useMemo(() => {
     try { const d = localStorage.getItem(STORAGE_KEYS.VOTE_DATA); return d ? JSON.parse(d) : null; } catch { return null; }
   }, []);
+
+  useEffect(() => {
+    if (!candidates || candidates.length === 0) {
+      dispatch(fetchCandidates({ active: true, force: true }));
+    }
+  }, [dispatch, candidates]);
+
+  const candidatesByPosition = useMemo(() => {
+    const grouped = {};
+    ELECTION_POSITIONS.forEach((pos) => {
+      grouped[pos.id] = (candidates || []).filter(
+        (c) => parseInt(c.position_id, 10) === pos.id && c.status !== 'inactive'
+      );
+    });
+    return grouped;
+  }, [candidates]);
 
   const orderedSelections = useMemo(() => {
     return ELECTION_POSITIONS.filter((pos) => selections[pos.id]).map((pos) => ({ ...pos, details: selections[pos.id] }));
   }, [selections]);
 
   const handleGoBack = () => navigate('/vote');
+
+  const editPosition = editPositionId
+    ? ELECTION_POSITIONS.find((p) => p.id === editPositionId)
+    : null;
+
+  const handleOpenEdit = useCallback((positionId) => {
+    const currentId = selections[positionId]
+      ? String(selections[positionId].candidate?.id ?? selections[positionId].candidate ?? '')
+      : '';
+    setEditPositionId(positionId);
+    setEditCandidateId(currentId);
+    setEditModalOpen(true);
+  }, [selections]);
+
+  const handleSaveEdits = useCallback(() => {
+    if (!editPositionId || !editCandidateId) return;
+    const candidate = candidates.find((c) => parseInt(c.id, 10) === parseInt(editCandidateId, 10));
+    if (!candidate) return;
+    const position = ELECTION_POSITIONS.find((p) => p.id === editPositionId);
+    const updated = {
+      ...selections,
+      [editPositionId]: { position: position?.label || editPositionId, candidate },
+    };
+    localStorage.setItem(STORAGE_KEYS.VOTE_SELECTIONS, JSON.stringify(updated));
+    setSelections(updated);
+    setEditModalOpen(false);
+    setEditPositionId(null);
+    setEditCandidateId('');
+  }, [editPositionId, editCandidateId, candidates, selections]);
 
   const handleSubmitVote = () => {
     Swal.fire({
@@ -120,6 +173,7 @@ const Confirmation = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Position</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Selected Candidate</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: 80 }}>Edit</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -132,6 +186,11 @@ const Confirmation = () => {
                           sx={{ bgcolor: 'rgba(22,163,74,0.1)', color: 'primary.main', fontWeight: 500 }} />
                       </Box>
                     </TableCell>
+                    <TableCell>
+                      <IconButton size="small" onClick={() => handleOpenEdit(item.id)} color="primary">
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -140,10 +199,17 @@ const Confirmation = () => {
           <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' }, p: 2 }}>
             {orderedSelections.map((item) => (
               <Paper key={item.id} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>{item.label}</Typography>
-                <Typography variant="body2" fontWeight={600} mt={0.5}>
-                  {item.details?.candidate?.fullname || 'Selected'}
-                </Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>{item.label}</Typography>
+                    <Typography variant="body2" fontWeight={600} mt={0.5}>
+                      {item.details?.candidate?.fullname || 'Selected'}
+                    </Typography>
+                  </Box>
+                  <IconButton size="small" onClick={() => handleOpenEdit(item.id)} color="primary">
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               </Paper>
             ))}
           </Stack>
@@ -180,11 +246,43 @@ const Confirmation = () => {
             Go Back
           </Button>
           <Button variant="contained" size="large" endIcon={<HowToVoteIcon />}
-            onClick={handleSubmitVote} disabled={loading || !voterPhoto} fullWidth={isMobile}
+            onClick={handleSubmitVote} disabled={loading} fullWidth={isMobile}
             sx={{ px: 4, py: 1.5, minHeight: 44, bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, fontWeight: 600 }}>
             {loading ? 'Submitting...' : 'Submit Vote'}
           </Button>
         </Box>
+
+        <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle fontWeight={700}>Edit {editPosition?.label || 'Position'}</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} mt={1}>
+              {editPositionId && (
+                <FormControl fullWidth size="small">
+                  <InputLabel>{editPosition?.label || 'Candidate'}</InputLabel>
+                  <Select
+                    value={editCandidateId}
+                    label={editPosition?.label || 'Candidate'}
+                    onChange={(e) => setEditCandidateId(e.target.value)}
+                  >
+                    {(candidatesByPosition[editPositionId] || []).map((c) => (
+                      <MenuItem key={c.id} value={String(c.id)}>
+                        {c.fullname}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setEditModalOpen(false)} color="inherit">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdits} variant="contained">
+              Save Changes
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </ErrorBoundary>
   );

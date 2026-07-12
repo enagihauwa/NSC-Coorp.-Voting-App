@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -21,8 +21,22 @@ const Vote = () => {
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
   const { candidates, loading, error } = useSelector((state) => state.candidates);
-  const [selections, setSelections] = useState({});
+  const [selections, setSelections] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.VOTE_SELECTIONS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const restored = {};
+        for (const [posId, data] of Object.entries(parsed)) {
+          restored[posId] = String(data.candidate?.id ?? data.candidate ?? '');
+        }
+        return restored;
+      }
+    } catch {}
+    return {};
+  });
   const [activeStep, setActiveStep] = useState(0);
+  const hasRestored = useRef(false);
 
   const voteData = useMemo(() => {
     try {
@@ -50,6 +64,18 @@ const Vote = () => {
     () => ELECTION_POSITIONS.filter((p) => (candidatesByPosition[p.id] || []).length > 0),
     [candidatesByPosition]
   );
+
+  useEffect(() => {
+    if (!hasRestored.current && activePositions.length > 0) {
+      const firstUnfilled = activePositions.findIndex((p) => !selections[p.id]);
+      if (firstUnfilled > 0) {
+        setActiveStep(firstUnfilled);
+      } else if (firstUnfilled === -1) {
+        setActiveStep(activePositions.length - 1);
+      }
+      hasRestored.current = true;
+    }
+  }, [activePositions, selections]);
 
   const currentPosition = activePositions[activeStep];
   const isLastStep = activeStep === activePositions.length - 1;

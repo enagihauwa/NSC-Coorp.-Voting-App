@@ -1,4 +1,8 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = rawApiUrl.endsWith('/api') || rawApiUrl.endsWith('/api/')
+  ? rawApiUrl
+  : `${rawApiUrl.replace(/\/$/, '')}/api`;
+
 
 // Static uploads are served from the server root (`/4003uploads`), not under `/api`.
 export const UPLOADS_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');

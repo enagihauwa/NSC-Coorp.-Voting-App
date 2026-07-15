@@ -27,7 +27,7 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-];
+  'https://nsc-coorp-voting-app.vercel.app'];
 
 if (process.env.FRONTEND_URL) {
   process.env.FRONTEND_URL.split(',').forEach(url => {
@@ -48,14 +48,14 @@ const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    
-    const isAllowed = allowedOrigins.includes(origin) || 
-                      (origin.endsWith('/') ? allowedOrigins.includes(origin.slice(0, -1)) : allowedOrigins.includes(origin + '/'));
-                      
+
+    const isAllowed = allowedOrigins.includes(origin) ||
+      (origin.endsWith('/') ? allowedOrigins.includes(origin.slice(0, -1)) : allowedOrigins.includes(origin + '/'));
+
     if (isAllowed || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
-    
+
     callback(null, false);
   },
   credentials: true,

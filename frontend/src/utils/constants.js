@@ -56,6 +56,11 @@ export const DEPARTMENTS = [
   'Internal Audit',
   'Procurement',
   'Research & Statistics',
+  'General Services',
+  'Regulatory Services',
+  'Executive Secretary Office',
+  'Consumer Affairs',
+  'Public Relations',
 ];
 
 export const LOCATIONS = [
